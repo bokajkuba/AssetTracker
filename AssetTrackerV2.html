@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="de" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset & Life Tracker Premium</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Google Fonts (Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+        input[type="date"], select { color-scheme: dark; }
+    </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen selection:bg-emerald-500/30 selection:text-emerald-400">
+
+    <!-- Navigation Bar -->
+    <nav class="border-b border-zinc-800/80 bg-zinc-900/40 sticky top-0 backdrop-blur-xl z-50 transition-all">
+        <div class="max-w-5xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between h-auto md:h-16 py-4 md:py-0 gap-4">
+            <div class="flex items-center space-x-3 cursor-pointer group" onclick="switchTab('dashboard')">
+                <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.65)] group-hover:scale-110 transition-transform"></div>
+                <span class="font-bold tracking-tight text-lg bg-gradient-to-r from-zinc-100 to-zinc-400 bg-clip-text text-transparent">AssetTracker<span class="text-emerald-500">.</span></span>
+            </div>
+            <div id="navigation-tabs" class="flex flex-wrap justify-center gap-1 bg-zinc-950 p-1 rounded-xl border border-zinc-800/60 shadow-inner"></div>
+        </div>
+    </nav>
+
+    <!-- Main Viewport -->
+    <main class="max-w-5xl mx-auto px-4 py-8">
+        
+        <!-- DASHBOARD / ÜBERSICHT -->
+        <div id="dashboard" class="tab-content block animate-fade-in">
+            <h1 class="text-2xl font-bold tracking-tight mb-1 text-zinc-50">Dashboard</h1>
+            <p class="text-zinc-400 text-sm mb-6">Alle kritischen Fristen und anstehenden Intervalle deiner Assets im Blick.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <!-- Stat Card Red -->
+                <div class="bg-zinc-900/60 border border-zinc-800/80 rounded-xl p-5 shadow-sm relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 p-4 opacity-10 text-rose-500 group-hover:scale-110 transition-transform"><i data-lucide="alert-triangle" class="w-12 h-12"></i></div>
+                    <div class="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Status Kritisch</div>
+                    <div class="text-4xl font-bold mt-2 text-rose-500 drop-shadow-[0_0_15px_rgba(244,63,94,0.15)]" id="count-red">0</div>
+                </div>
+                <!-- Stat Card Yellow -->
+                <div class="bg-zinc-900/60 border border-zinc-800/80 rounded-xl p-5 shadow-sm relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 p-4 opacity-10 text-amber-500 group-hover:scale-110 transition-transform"><i data-lucide="clock" class="w-12 h-12"></i></div>
+                    <div class="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Anstehend (30 Tage)</div>
+                    <div class="text-4xl font-bold mt-2 text-amber-500 drop-shadow-[0_0_15px_rgba(245,158,11,0.15)]" id="count-yellow">0</div>
+                </div>
+                <!-- Stat Card Green -->
+                <div class="bg-zinc-900/60 border border-zinc-800/80 rounded-xl p-5 shadow-sm relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 p-4 opacity-10 text-emerald-500 group-hover:scale-110 transition-transform"><i data-lucide="check-circle" class="w-12 h-12"></i></div>
+                    <div class="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Abgeschlossen / OK</div>
+                    <div class="text-4xl font-bold mt-2 text-emerald-500 drop-shadow-[0_0_15px_rgba(16,185,129,0.15)]" id="count-green">0</div>
+                </div>
+            </div>
+
+            <div class="bg-zinc-900/40 border border-zinc-800/80 rounded-xl overflow-hidden shadow-md">
+                <div class="px-6 py-4 border-b border-zinc-800/80 bg-zinc-900/40 flex items-center space-x-2">
+                    <i data-lucide="layers" class="w-4 h-4 text-zinc-400"></i>
+                    <h2 class="font-semibold text-zinc-200 text-sm tracking-tight">Fristen-Matrix</h2>
+                </div>
+                <div class="divide-y divide-zinc-800/60" id="dashboard-deadline-list"></div>
+            </div>
+        </div>
+
+        <!-- GENERISCHES DYNAMISCHES KATEGORIE-TAB -->
+        <div id="dynamic-category-view" class="tab-content hidden animate-fade-in">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Eingabe-Formular Card -->
+                <div class="bg-zinc-900/40 border border-zinc-800/80 rounded-xl p-6 h-fit shadow-sm">
+                    <h2 class="text-base font-bold mb-4 text-zinc-100 flex items-center gap-2" id="category-view-title">
+                        <i data-lucide="plus-circle" class="w-4 h-4 text-emerald-500"></i>Eintrag hinzufügen
+                    </h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-zinc-400 mb-1.5" id="category-label-name">Name / Objekt</label>
+                            <input type="text" id="generic-name" placeholder="z.B. Golf, Luna" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all placeholder:text-zinc-600">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-zinc-400 mb-1.5">Maßnahme / Option</label>
+                            <select id="generic-type" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all"></select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-zinc-400 mb-1.5">Datum (Klicken zum Öffnen)</label>
+                            <div class="relative">
+                                <input type="date" id="generic-datum" onclick="this.showPicker()" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all cursor-pointer">
+                            </div>
+                        </div>
+                        <button onclick="saveGenericEntry()" class="w-full bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white text-sm font-semibold py-2.5 rounded-lg transition-all shadow-md shadow-emerald-950/20 cursor-pointer flex items-center justify-center gap-2">
+                            <i data-lucide="save" class="w-4 h-4"></i>Speichern
+                        </button>
+                    </div>
+                </div>
+                <!-- Historien Card -->
+                <div class="lg:col-span-2 bg-zinc-900/40 border border-zinc-800/80 rounded-xl overflow-hidden shadow-sm">
+                    <div class="px-6 py-4 border-b border-zinc-800/80 flex items-center justify-between">
+                        <h2 class="font-semibold text-sm text-zinc-200 flex items-center gap-2">
+                            <i data-lucide="history" class="w-4 h-4 text-zinc-400"></i>Historie & Logs
+                        </h2>
+                    </div>
+                    <div class="divide-y divide-zinc-800/60" id="generic-history-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KONFIGURATION & DATEN -->
+        <div id="settings" class="tab-content hidden space-y-8 animate-fade-in">
+            <div class="bg-zinc-900/40 border border-zinc-800/80 rounded-xl p-6 shadow-sm">
+                <h2 class="text-base font-bold mb-1 text-zinc-100 flex items-center gap-2"><i data-lucide="sliders" class="w-4 h-4 text-zinc-400"></i>Struktur-Editor (Kategorien & Optionen)</h2>
+                <p class="text-zinc-400 text-xs mb-6">Erstelle neue Tracker-Bereiche oder füge Intervalle hinzu.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Kategorie erstellen -->
+                    <div class="bg-zinc-950/50 border border-zinc-800/60 rounded-xl p-4 space-y-3">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5"><i data-lucide="folder-plus" class="w-3.5 h-3.5"></i>Neue Hauptkategorie</h3>
+                        <input type="text" id="new-cat-id" placeholder="ID (z.B. immobilie)" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-emerald-500 transition-all placeholder:text-zinc-600">
+                        <input type="text" id="new-cat-label" placeholder="Anzeigename (z.B. Hauspflege)" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-emerald-500 transition-all placeholder:text-zinc-600">
+                        <button onclick="createNewCategory()" class="w-full bg-zinc-800 hover:bg-zinc-700 active:scale-[0.98] text-xs py-2 rounded-lg font-semibold transition-all cursor-pointer">Kategorie erstellen</button>
+                    </div>
+                    
+                    <!-- Option zuweisen -->
+                    <div class="bg-zinc-950/50 border border-zinc-800/60 rounded-xl p-4 space-y-3">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5"><i data-lucide="file-plus" class="w-3.5 h-3.5"></i>Option / Maßnahme zuweisen</h3>
+                        <select id="add-opt-cat-select" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-emerald-500 transition-all"></select>
+                        <input type="text" id="new-opt-name" placeholder="Name (z.B. Heizungswartung)" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-emerald-500 transition-all placeholder:text-zinc-600">
+                        
+                        <select id="new-opt-mode" onchange="toggleIntervalInput()" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-emerald-500 transition-all">
+                            <option value="interval">Mit Intervall (Erinnerung)</option>
+                            <option value="log">Nur Log (Reine Historie)</option>
+                        </select>
+                        
+                        <div id="interval-days-container" class="flex gap-2">
+                            <input type="number" id="new-opt-interval" placeholder="Wert" class="w-2/3 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-emerald-500 transition-all placeholder:text-zinc-600">
+                            <select id="new-opt-unit" class="w-1/3 bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-emerald-500 transition-all">
+                                <option value="days">Tage</option>
+                                <option value="weeks">Wochen</option>
+                                <option value="months">Monate</option>
+                                <option value="years">Jahre</option>
+                            </select>
+                        </div>
+                        
+                        <button onclick="addOptionToCategory()" class="w-full bg-zinc-800 hover:bg-zinc-700 active:scale-[0.98] text-xs py-2 rounded-lg font-semibold transition-all cursor-pointer">Option hinzufügen</button>
+                    </div>
+                </div>
+                <div class="mt-6 border-t border-zinc-800/80 pt-6">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-rose-400 mb-3 flex items-center gap-1.5"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>Kategorien löschen</h3>
+                    <div id="delete-management-list" class="flex flex-wrap gap-2"></div>
+                </div>
+            </div>
+
+            <!-- Import/Export Card -->
+            <div class="bg-zinc-900/40 border border-zinc-800/80 rounded-xl p-6 shadow-sm">
+                <h2 class="text-base font-bold mb-1 text-zinc-100 flex items-center gap-2"><i data-lucide="database" class="w-4 h-4 text-zinc-400"></i>Daten-Export & Import</h2>
+                <p class="text-zinc-400 text-xs mb-6">Sichere deine Daten lokal als JSON-Datei oder lade einen bestehenden Export hoch.</p>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <button onclick="exportFullBackup()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 active:scale-[0.98] border border-zinc-700/60 text-zinc-200 text-sm font-semibold py-2.5 rounded-lg transition-all cursor-pointer flex items-center justify-center gap-2">
+                        <i data-lucide="download" class="w-4 h-4"></i>Daten exportieren (JSON)
+                    </button>
+                    <label class="flex-1 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white text-sm font-semibold py-2.5 rounded-lg transition-all shadow-md text-center relative block cursor-pointer">
+                        <span class="flex items-center justify-center gap-2"><i data-lucide="upload" class="w-4 h-4"></i>Daten importieren</span>
+                        <input type="file" id="import-backup-file" onchange="importFullBackup()" class="hidden" accept=".json">
+                    </label>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const defaultCategories = {
+            'katzen': { label: 'Katzen', icon: 'paw', types: { 'Zeckenmittel': 28, 'Wurmkur': 91, 'Impfung': 365 } },
+            'auto': { label: 'Autos', icon: 'car', types: { 'TÜV': 730, 'Bremsen': 0, 'Reifen': 0, 'Licht': 0 } },
+            'zahnarzt': { label: 'Zahnarzt', icon: 'activity', types: { 'Prophylaxe': 182 } },
+            'zoo': { label: 'Zoo', icon: 'map', types: { 'Besuch': 0 } },
+            'garten': { label: 'Garten', icon: 'sprout', types: { 'Düngung': 182 } }
+        };
+
+        let currentCategory = 'dashboard';
+
+        function formatInterval(days) {
+            if (!days || days === 0) return 'Nur Log';
+            if (days === 730) return '2 Jahre';
+            if (days === 365) return '1 Jahr';
+            if (days === 182 || days === 180) return '6 Monate';
+            if (days === 91 || days === 90) return '3 Monate';
+            if (days === 28) return '4 Wochen';
+            
+            if (days >= 365) {
+                const j = Math.round(days / 365);
+                return `${j} ${j === 1 ? 'Jahr' : 'Jahre'}`;
+            }
+            if (days >= 30) {
+                const m = Math.round(days / 30.5);
+                return `${m} ${m === 1 ? 'Monat' : 'Monate'}`;
+            }
+            if (days >= 7) {
+                const w = Math.round(days / 7);
+                return `${w} ${w === 1 ? 'Woche' : 'Wochen'}`;
+            }
+            return `${days} Tage`;
+        }
+
+        function getCategoriesConfig() {
+            if(!localStorage.getItem('tracker_categories')) {
+                localStorage.setItem('tracker_categories', JSON.stringify(defaultCategories));
+            }
+            return JSON.parse(localStorage.getItem('tracker_categories'));
+        }
+
+        function getEntries(catId) {
+            return JSON.parse(localStorage.getItem(`entries_${catId}`)) || [];
+        }
+
+        function renderNavigation() {
+            const navContainer = document.getElementById('navigation-tabs');
+            const config = getCategoriesConfig();
+            
+            let html = `<button class="nav-btn px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${currentCategory === 'dashboard' ? 'bg-zinc-800 text-zinc-100 shadow-sm' : 'text-zinc-400 hover:text-zinc-200'}" onclick="switchTab('dashboard')"><i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i>Übersicht</button>`;
+            
+            Object.keys(config).forEach(key => {
+                const iconName = config[key].icon || 'tag';
+                html += `<button class="nav-btn px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${currentCategory === key ? 'bg-zinc-800 text-zinc-100 shadow-sm' : 'text-zinc-400 hover:text-zinc-200'}" onclick="switchTab('${key}')"><i data-lucide="${iconName}" class="w-3.5 h-3.5"></i>${config[key].label}</button>`;
+            });
+            
+            html += `<button class="nav-btn px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${currentCategory === 'settings' ? 'bg-zinc-800 text-zinc-100 shadow-sm' : 'text-zinc-400 hover:text-zinc-200'}" onclick="switchTab('settings')"><i data-lucide="sliders" class="w-3.5 h-3.5"></i>Daten</button>`;
+            
+            navContainer.innerHTML = html;
+            lucide.createIcons();
+        }
+
+        function switchTab(tabId) {
+            currentCategory = tabId;
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.replace('block', 'hidden'));
+            renderNavigation();
+
+            if (tabId === 'dashboard') {
+                document.getElementById('dashboard').classList.replace('hidden', 'block');
+                renderDashboard();
+            } else if (tabId === 'settings') {
+                document.getElementById('settings').classList.replace('hidden', 'block');
+                renderSettingsPanel();
+            } else {
+                document.getElementById('dynamic-category-view').classList.replace('hidden', 'block');
+                renderGenericCategoryPage(tabId);
+            }
+        }
+
+        function renderGenericCategoryPage(catId) {
+            const config = getCategoriesConfig()[catId];
+            document.getElementById('category-view-title').innerHTML = `<i data-lucide="${config.icon || 'tag'}" class="w-4 h-4 text-emerald-500"></i>${config.label} bearbeiten`;
+            document.getElementById('category-label-name').innerText = `Name / Objekt (${config.label})`;
+            
+            const select = document.getElementById('generic-type');
+            select.innerHTML = Object.keys(config.types).map(t => `<option value="${t}">${t} (${formatInterval(config.types[t])})</option>`).join('');
+            
+            renderGenericHistoryList(catId);
+            lucide.createIcons();
+        }
+
+        function saveGenericEntry() {
+            const name = document.getElementById('generic-name').value.trim();
+            const type = document.getElementById('generic-type').value;
+            const date = document.getElementById('generic-datum').value;
+
+            if(!name || !date) return alert("Bitte alle Felder ausfüllen.");
+
+            const entries = getEntries(currentCategory);
+            entries.push({ name, type, date });
+            entries.sort((a,b) => new Date(b.date) - new Date(a.date));
+            
+            localStorage.setItem(`entries_${currentCategory}`, JSON.stringify(entries));
+            document.getElementById('generic-name').value = "";
+            document.getElementById('generic-datum').value = "";
+            renderGenericCategoryPage(currentCategory);
+        }
+
+        function getStatusInfo(targetDateStr, intervalDays) {
+            if(!intervalDays || intervalDays === 0) return { text: "Dokumentiert", class: "text-zinc-400 bg-zinc-900 border border-zinc-800/60" };
+            const nextDate = new Date(new Date(targetDateStr).getTime() + (intervalDays * 24 * 60 * 60 * 1000));
+            const today = new Date(); today.setHours(0,0,0,0);
+            const diffDays = Math.ceil((nextDate - today) / (1000 * 60 * 60 * 24));
+            const formattedDate = nextDate.toLocaleDateString('de-DE');
+
+            if (diffDays <= 0) return { text: `Überfällig seit ${formattedDate}`, status: 'red', class: "text-rose-400 bg-rose-500/10 border border-rose-500/20 shadow-[0_0_15px_rgba(244,63,94,0.05)]" };
+            if (diffDays <= 30) return { text: `Fällig am ${formattedDate} (In ${diffDays} T.)`, status: 'yellow', class: "text-amber-400 bg-amber-500/10 border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.05)]" };
+            return { text: `OK bis ${formattedDate}`, status: 'green', class: "text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.05)]" };
+        }
+
+        function renderGenericHistoryList(catId) {
+            const container = document.getElementById('generic-history-list');
+            const entries = getEntries(catId);
+            const config = getCategoriesConfig()[catId];
+            if(entries.length === 0) { container.innerHTML = `<div class="p-8 text-sm text-zinc-500 text-center">Keine Einträge aufgezeichnet.</div>`; return; }
+
+            const latestMap = {};
+            entries.forEach(e => { const key = `${e.name}-${e.type}`; if(!latestMap[key]) latestMap[key] = e.date; });
+
+            container.innerHTML = entries.map(e => {
+                const isLatest = latestMap[`${e.name}-${e.type}`] === e.date;
+                const status = isLatest ? getStatusInfo(e.date, config.types[e.type] || 0) : { text: "Historie", class: "text-zinc-500 bg-zinc-950/20 border border-transparent" };
+                return `
+                    <div class="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-zinc-900/20 hover:scale-[1.005] active:scale-[0.998] transition-all duration-200">
+                        <div class="flex items-start gap-3">
+                            <div class="p-2 rounded-lg bg-zinc-950/40 border border-zinc-800/40 mt-0.5"><i data-lucide="${config.icon || 'tag'}" class="w-4 h-4 text-zinc-400"></i></div>
+                            <div>
+                                <span class="text-xs font-bold text-emerald-500 tracking-wide uppercase block">${e.name}</span>
+                                <span class="text-sm font-semibold text-zinc-200">${e.type}</span>
+                                <span class="text-xs text-zinc-500 block sm:inline sm:ml-2">ausgeführt am ${new Date(e.date).toLocaleDateString('de-DE')}</span>
+                            </div>
+                        </div>
+                        <div class="text-xs px-2.5 py-1 rounded-md font-medium w-fit ${status.class}">${status.text}</div>
+                    </div>`;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function renderDashboard() {
+            const container = document.getElementById('dashboard-deadline-list');
+            const config = getCategoriesConfig();
+            let matrixHtml = ""; let cRed = 0, cYellow = 0, cGreen = 0;
+
+            Object.keys(config).forEach(catId => {
+                const entries = getEntries(catId); const uniqueAssets = {};
+                entries.forEach(e => { const key = `${e.name}-${e.type}`; if(!uniqueAssets[key]) uniqueAssets[key] = e; });
+
+                Object.values(uniqueAssets).forEach(e => {
+                    const interval = config[catId].types[e.type]; if(!interval || interval === 0) return;
+                    const status = getStatusInfo(e.date, interval);
+                    if(status.status === 'red') cRed++; if(status.status === 'yellow') cYellow++; if(status.status === 'green') cGreen++;
+
+                    matrixHtml += `
+                        <div class="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-zinc-900/20 hover:scale-[1.002] transition-all duration-200">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-2 h-2 rounded-full ${status.status === 'red' ? 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.6)]' : status.status === 'yellow' ? 'bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.6)]' : 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.6)]'}"></div>
+                                <div class="flex items-start gap-2.5">
+                                    <div class="p-1.5 rounded-md bg-zinc-950/40 border border-zinc-800/40 hidden sm:block"><i data-lucide="${config[catId].icon || 'tag'}" class="w-3.5 h-3.5 text-zinc-500"></i></div>
+                                    <div>
+                                        <span class="text-sm font-semibold text-zinc-100">${e.name} <span class="text-xs text-zinc-500 font-normal">(${config[catId].label})</span></span>
+                                        <span class="text-xs text-zinc-400 block">${e.type} <span class="text-zinc-600">•</span> Intervall: ${formatInterval(interval)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-xs px-3 py-1 rounded-lg font-medium ${status.class}">${status.text}</div>
+                        </div>`;
+                });
+            });
+            document.getElementById('count-red').innerText = cRed;
+            document.getElementById('count-yellow').innerText = cYellow;
+            document.getElementById('count-green').innerText = cGreen;
+            container.innerHTML = matrixHtml || `<div class="p-8 text-sm text-zinc-500 text-center">Keine aktiven Überwachungsfristen generiert.</div>`;
+            lucide.createIcons();
+        }
+
+        function toggleIntervalInput() {
+            const mode = document.getElementById('new-opt-mode').value;
+            const container = document.getElementById('interval-days-container');
+            if(mode === 'log') container.classList.add('hidden');
+            else container.classList.remove('hidden');
+        }
+
+        function renderSettingsPanel() {
+            const config = getCategoriesConfig();
+            document.getElementById('add-opt-cat-select').innerHTML = Object.keys(config).map(k => `<option value="${k}">${config[k].label}</option>`).join('');
+            document.getElementById('delete-management-list').innerHTML = Object.keys(config).map(k => `
+                <button onclick="deleteCategory('${k}')" class="bg-rose-950/30 hover:bg-rose-900/50 border border-rose-900/30 text-rose-400 text-xs px-3 py-1.5 rounded-lg active:scale-95 transition-all cursor-pointer flex items-center gap-1"><i data-lucide="trash" class="w-3 h-3"></i>${config[k].label} löschen</button>
+            `).join('');
+            toggleIntervalInput();
+            lucide.createIcons();
+        }
+
+        function createNewCategory() {
+            const id = document.getElementById('new-cat-id').value.trim().toLowerCase();
+            const label = document.getElementById('new-cat-label').value.trim();
+            if(!id || !label) return alert("Eingaben unvollständig.");
+            const config = getCategoriesConfig(); if(config[id]) return alert("Kategorie existiert bereits.");
+            
+            config[id] = { label: label, icon: 'layers', types: {} };
+            localStorage.setItem('tracker_categories', JSON.stringify(config));
+            document.getElementById('new-cat-id').value = ""; document.getElementById('new-cat-label').value = "";
+            renderNavigation(); renderSettingsPanel();
+        }
+
+        function addOptionToCategory() {
+            const catId = document.getElementById('add-opt-cat-select').value;
+            const optName = document.getElementById('new-opt-name').value.trim();
+            const mode = document.getElementById('new-opt-mode').value;
+            
+            if(!optName) return alert("Name der Maßnahme fehlt.");
+            
+            let interval = 0;
+            if(mode === 'interval') {
+                const val = parseInt(document.getElementById('new-opt-interval').value) || 0;
+                const unit = document.getElementById('new-opt-unit').value;
+                if(val <= 0) return alert("Bitte einen Wert eintragen.");
+                
+                if(unit === 'days') interval = val;
+                else if(unit === 'weeks') interval = val * 7;
+                else if(unit === 'months') interval = val * 30;
+                else if(unit === 'years') interval = val * 365;
+            }
+
+            const config = getCategoriesConfig(); 
+            config[catId].types[optName] = interval;
+            localStorage.setItem('tracker_categories', JSON.stringify(config));
+            
+            document.getElementById('new-opt-name').value = ""; 
+            document.getElementById('new-opt-interval').value = "";
+            alert(`Option erfolgreich zugewiesen.`);
+        }
+
+        function deleteCategory(catId) {
+            if(!confirm(`Möchtest du diese Kategorie löschen?`)) return;
+            const config = getCategoriesConfig(); delete config[catId];
+            localStorage.setItem('tracker_categories', JSON.stringify(config));
+            localStorage.removeItem(`entries_${catId}`); switchTab('dashboard');
+        }
+
+        function exportFullBackup() {
+            const backup = { config: getCategoriesConfig(), data: {} };
+            Object.keys(backup.config).forEach(k => { backup.data[k] = getEntries(k); });
+            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+            a.download = `tracker_export_${new Date().toISOString().split('T')[0]}.json`; a.click();
+        }
+
+        function importFullBackup() {
+            const file = document.getElementById('import-backup-file').files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const backup = JSON.parse(e.target.result);
+                    if(backup.config) {
+                        localStorage.setItem('tracker_categories', JSON.stringify(backup.config));
+                        Object.keys(backup.data).forEach(k => { localStorage.setItem(`entries_${k}`, JSON.stringify(backup.data[k])); });
+                        alert("Daten erfolgreich importiert."); switchTab('dashboard');
+                    }
+                } catch (err) { alert("Format ungültig."); }
+            };
+            reader.readAsText(file);
+        }
+
+        // App-Initialisierung
+        renderNavigation();
+        renderDashboard();
+    </script>
+</body>
+</html>
