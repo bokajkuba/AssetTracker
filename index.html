@@ -18,6 +18,8 @@
         /* Versteckt den Scrollbalken in der Navigation, behält aber die Funktion */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        /* Erzwingt, dass die Buttons immer klickbar sind */
+        button { pointer-events: auto !important; position: relative; z-index: 10; }
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-zinc-950 text-gray-900 dark:text-zinc-100 min-h-screen transition-colors duration-200">
@@ -191,18 +193,28 @@
         }
 
         // --- 3. NAVIGATION & UI ---
-        function renderNavigation() {
-            const navContainer = document.getElementById('navigation-tabs');
-            const config = getCategoriesConfig();
-            
-            let html = `<button class="px-4 py-1.5 text-sm font-medium rounded-lg ${currentCategory === 'dashboard' ? 'bg-gray-200 dark:bg-zinc-800' : 'text-gray-500 dark:text-zinc-400'}" onclick="switchTab('dashboard')">Übersicht</button>`;
-            Object.keys(config).forEach(key => {
-                html += `<button class="px-4 py-1.5 text-sm font-medium rounded-lg ${currentCategory === key ? 'bg-gray-200 dark:bg-zinc-800' : 'text-gray-500 dark:text-zinc-400'}" onclick="switchTab('${key}')">${config[key].label}</button>`;
-            });
-            html += `<button class="px-3 py-1 text-sm font-bold rounded-lg border border-dashed border-emerald-600/50 text-emerald-500 hover:bg-emerald-500/10 transition-all cursor-pointer" onclick="promptCreateCategoryGlobal()">+ Neu</button>`;
-            
-            navContainer.innerHTML = html;
-        }
+function renderNavigation() {
+    const navContainer = document.getElementById('navigation-tabs');
+    // Wir erzwingen hier nochmal den Aufruf von getCategoriesConfig()
+    const config = getCategoriesConfig(); 
+    
+    // Sicherstellen, dass config existiert, sonst leeres Objekt
+    const categories = config || {};
+    
+    // 1. Übersicht-Button
+    let html = `<button class="px-4 py-1.5 text-sm font-medium rounded-lg ${currentCategory === 'dashboard' ? 'bg-gray-200 dark:bg-zinc-800' : 'text-gray-500 dark:text-zinc-400'}" onclick="switchTab('dashboard')">Übersicht</button>`;
+    
+    // 2. Dynamische Kategorien
+    Object.keys(categories).forEach(key => {
+        const label = categories[key].label || key; // Fallback auf Key, falls label fehlt
+        html += `<button class="px-4 py-1.5 text-sm font-medium rounded-lg ${currentCategory === key ? 'bg-gray-200 dark:bg-zinc-800' : 'text-gray-500 dark:text-zinc-400'}" onclick="switchTab('${key}')">${label}</button>`;
+    });
+    
+    // 3. Neu-Button
+    html += `<button class="px-3 py-1 text-sm font-bold rounded-lg border border-dashed border-emerald-600/50 text-emerald-500 hover:bg-emerald-500/10 transition-all cursor-pointer" onclick="promptCreateCategoryGlobal()">+ Neu</button>`;
+    
+    navContainer.innerHTML = html;
+}
         
         function promptCreateCategoryGlobal() { const label = prompt("Name der neuen Kategorie:"); if (label && label.trim()) { const targetId = saveNewCategoryLogic(label.trim()); if (targetId) switchTab(targetId); } }
         
@@ -292,21 +304,29 @@
             document.getElementById('generic-name').value = ""; document.getElementById('generic-cost').value = "";
             renderGenericCategoryPage(currentCategory);
         }
-
         function editEntry(catId, entryId) {
             const entries = getEntries(catId);
             const entry = entries.find(e => e.id === entryId);
             if (!entry) return;
             
-            const newDate = prompt(`Neues Datum (YYYY-MM-DD):`, entry.date);
-            if (newDate) {
-                entry.date = newDate;
-                const newCost = prompt(`Kosten (in €):`, entry.cost || "");
-                if (newCost !== null) { entry.cost = newCost.trim() === "" ? null : newCost.trim(); }
-                entries.sort((a,b) => new Date(b.date) - new Date(a.date));
-                localStorage.setItem(`entries_${catId}`, JSON.stringify(entries));
-                renderGenericHistoryList(catId);
-            }
+            // Neue Abfrage für den Namen (Beschreibung)
+            const newName = prompt("Neue Beschreibung:", entry.name);
+            if (newName === null) return; // Abbrechen
+            
+            const newDate = prompt("Neues Datum (YYYY-MM-DD):", entry.date);
+            if (newDate === null) return;
+            
+            const newCost = prompt("Neue Kosten (in €):", entry.cost || "");
+            if (newCost === null) return;
+            
+            // Werte zuweisen
+            entry.name = newName.trim();
+            entry.date = newDate;
+            entry.cost = newCost.trim() === "" ? null : newCost.trim();
+            
+            entries.sort((a,b) => new Date(b.date) - new Date(a.date));
+            localStorage.setItem(`entries_${catId}`, JSON.stringify(entries));
+            renderGenericHistoryList(catId);
         }
 
         function deleteEntry(catId, entryId) {
@@ -354,12 +374,14 @@
             const latestMap = {};
             getEntries(catId).forEach(e => { const key = `${e.name}-${e.type}`; if(!latestMap[key]) latestMap[key] = e.date; });
 
-            let html = entries.map(e => {
+                let html = entries.map(e => {
                 const isLatest = latestMap[`${e.name}-${e.type}`] === e.date;
                 const interval = config.types ? getInterval(config.types[e.type]) : undefined;
                 const status = isLatest ? getStatusInfo(e.date, interval) : { text: "Historie", class: "text-gray-500 dark:text-zinc-500 bg-gray-100 dark:bg-zinc-950/40 border border-gray-200 dark:border-zinc-800" };
                 const costDisplay = e.cost ? `<span class="text-xs text-amber-600 dark:text-amber-500 font-medium ml-3">| ${e.cost} €</span>` : '';
                 
+                // Wir nutzen hier ein geschlossenes String-Template, das durch die einfachen Anführungszeichen 
+                // innerhalb der Funktion nicht mehr durch `catId` oder `e.id` gestört wird
                 return `
                     <div class="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div>
@@ -369,8 +391,8 @@
                         </div>
                         <div class="flex items-center gap-3">
                             <div class="text-xs px-2.5 py-1 rounded-md font-medium ${status.class} mr-2">${status.text}</div>
-                            <button onclick="editEntry('${catId}', '${e.id}')" class="text-gray-400 hover:text-emerald-500 dark:text-zinc-500 dark:hover:text-emerald-400 text-lg" title="Bearbeiten">✏️</button>
-                            <button onclick="deleteEntry('${catId}', '${e.id}')" class="text-gray-400 hover:text-rose-500 dark:text-zinc-500 dark:hover:text-rose-400 text-lg" title="Löschen">🗑️</button>
+                            <button onclick="editEntry('${catId}', '${e.id}')" class="cursor-pointer text-gray-400 hover:text-emerald-500 dark:text-zinc-500 dark:hover:text-emerald-400 text-lg" title="Bearbeiten">✏️</button>
+                            <button onclick="deleteEntry('${catId}', '${e.id}')" class="cursor-pointer text-gray-400 hover:text-rose-500 dark:text-zinc-500 dark:hover:text-rose-400 text-lg" title="Löschen">🗑️</button>
                         </div>
                     </div>`;
             }).join('');
