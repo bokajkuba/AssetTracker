@@ -3,167 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asset & Life Tracker Premium</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- Google Fonts (Inter) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <title>Termin & Kosten Tracker v4.2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Lucide Icons CDN -->
-    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
-        input[type="date"], select { color-scheme: dark; }
+        body { font-family: 'Inter', sans-serif; }
+        input[type="date"], select { color-scheme: light dark; }
+        /* Versteckt den Scrollbalken in der Navigation, behält aber die Funktion */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="bg-zinc-950 text-zinc-100 min-h-screen selection:bg-emerald-500/30 selection:text-emerald-400">
+<body class="bg-gray-50 dark:bg-zinc-950 text-gray-900 dark:text-zinc-100 min-h-screen transition-colors duration-200">
 
-    <!-- Navigation Bar -->
-    <nav class="border-b border-zinc-800/80 bg-zinc-900/40 sticky top-0 backdrop-blur-xl z-50 transition-all">
-        <div class="max-w-5xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between h-auto md:h-16 py-4 md:py-0 gap-4">
-            <div class="flex items-center space-x-3 cursor-pointer group" onclick="switchTab('dashboard')">
-                <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.65)] group-hover:scale-110 transition-transform"></div>
-                <span class="font-bold tracking-tight text-lg bg-gradient-to-r from-zinc-100 to-zinc-400 bg-clip-text text-transparent">AssetTracker<span class="text-emerald-500">.</span></span>
+<nav class="border-b border-gray-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/50 sticky top-0 backdrop-blur-md z-50">
+        <div class="max-w-5xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-4">
+            
+            <div class="flex items-center space-x-3 cursor-pointer shrink-0" onclick="switchTab('dashboard')">
+                <div class="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)]"></div>
+                <span class="font-bold tracking-tight text-lg hidden sm:block">Termin & Kosten Tracker<span class="text-emerald-500">.</span></span>
+                <span class="font-bold tracking-tight text-lg sm:hidden">Tracker<span class="text-emerald-500">.</span></span>
             </div>
-            <div id="navigation-tabs" class="flex flex-wrap justify-center gap-1 bg-zinc-950 p-1 rounded-xl border border-zinc-800/60 shadow-inner"></div>
+            
+            <div id="navigation-tabs" class="flex flex-wrap justify-center gap-1 bg-gray-100 dark:bg-zinc-950 p-1 rounded-xl border border-gray-200 dark:border-zinc-800 items-center"></div>
+            
+            <div class="flex items-center gap-2 shrink-0">
+                <button onclick="switchTab('settings')" class="p-2 rounded-lg bg-gray-200 dark:bg-zinc-800 text-gray-600 dark:text-zinc-300 hover:bg-gray-300 dark:hover:bg-zinc-700 transition-colors" title="Einstellungen">
+                    ⚙️
+                </button>
+                <button onclick="toggleTheme()" class="p-2 rounded-lg bg-gray-200 dark:bg-zinc-800 text-gray-600 dark:text-zinc-300 hover:bg-gray-300 dark:hover:bg-zinc-700 transition-colors" title="Dark/Light Mode">
+                    <span id="theme-icon">☀️</span>
+                </button>
+            </div>
+
         </div>
     </nav>
 
-    <!-- Main Viewport -->
     <main class="max-w-5xl mx-auto px-4 py-8">
-        
-        <!-- DASHBOARD / ÜBERSICHT -->
-        <div id="dashboard" class="tab-content block animate-fade-in">
-            <h1 class="text-2xl font-bold tracking-tight mb-1 text-zinc-50">Dashboard</h1>
-            <p class="text-zinc-400 text-sm mb-6">Alle kritischen Fristen und anstehenden Intervalle deiner Assets im Blick.</p>
-            
+        <div id="dashboard" class="tab-content block">
+            <h1 class="text-2xl font-bold tracking-tight mb-2">Dashboard</h1>
+            <p class="text-gray-500 dark:text-zinc-400 text-sm mb-6">Alle kritischen Fristen und anstehenden Intervalle deiner Assets im Blick.</p>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <!-- Stat Card Red -->
-                <div class="bg-zinc-900/60 border border-zinc-800/80 rounded-xl p-5 shadow-sm relative overflow-hidden group">
-                    <div class="absolute top-0 right-0 p-4 opacity-10 text-rose-500 group-hover:scale-110 transition-transform"><i data-lucide="alert-triangle" class="w-12 h-12"></i></div>
-                    <div class="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Status Kritisch</div>
-                    <div class="text-4xl font-bold mt-2 text-rose-500 drop-shadow-[0_0_15px_rgba(244,63,94,0.15)]" id="count-red">0</div>
+                <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm">
+                    <div class="text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider">Status Kritisch</div>
+                    <div class="text-3xl font-bold mt-2 text-rose-500" id="count-red">0</div>
                 </div>
-                <!-- Stat Card Yellow -->
-                <div class="bg-zinc-900/60 border border-zinc-800/80 rounded-xl p-5 shadow-sm relative overflow-hidden group">
-                    <div class="absolute top-0 right-0 p-4 opacity-10 text-amber-500 group-hover:scale-110 transition-transform"><i data-lucide="clock" class="w-12 h-12"></i></div>
-                    <div class="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Anstehend (30 Tage)</div>
-                    <div class="text-4xl font-bold mt-2 text-amber-500 drop-shadow-[0_0_15px_rgba(245,158,11,0.15)]" id="count-yellow">0</div>
+                <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm">
+                    <div class="text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider">Anstehend (14 Tage)</div>
+                    <div class="text-3xl font-bold mt-2 text-amber-500" id="count-yellow">0</div>
                 </div>
-                <!-- Stat Card Green -->
-                <div class="bg-zinc-900/60 border border-zinc-800/80 rounded-xl p-5 shadow-sm relative overflow-hidden group">
-                    <div class="absolute top-0 right-0 p-4 opacity-10 text-emerald-500 group-hover:scale-110 transition-transform"><i data-lucide="check-circle" class="w-12 h-12"></i></div>
-                    <div class="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Abgeschlossen / OK</div>
-                    <div class="text-4xl font-bold mt-2 text-emerald-500 drop-shadow-[0_0_15px_rgba(16,185,129,0.15)]" id="count-green">0</div>
+                <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm">
+                    <div class="text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider">Abgeschlossen / OK</div>
+                    <div class="text-3xl font-bold mt-2 text-emerald-500" id="count-green">0</div>
                 </div>
             </div>
-
-            <div class="bg-zinc-900/40 border border-zinc-800/80 rounded-xl overflow-hidden shadow-md">
-                <div class="px-6 py-4 border-b border-zinc-800/80 bg-zinc-900/40 flex items-center space-x-2">
-                    <i data-lucide="layers" class="w-4 h-4 text-zinc-400"></i>
-                    <h2 class="font-semibold text-zinc-200 text-sm tracking-tight">Fristen-Matrix</h2>
-                </div>
-                <div class="divide-y divide-zinc-800/60" id="dashboard-deadline-list"></div>
+            <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm">
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-900/50 font-semibold">Fristen-Matrix</div>
+                <div class="divide-y divide-gray-100 dark:divide-zinc-800" id="dashboard-deadline-list"></div>
             </div>
         </div>
 
-        <!-- GENERISCHES DYNAMISCHES KATEGORIE-TAB -->
-        <div id="dynamic-category-view" class="tab-content hidden animate-fade-in">
+        <div id="dynamic-category-view" class="tab-content hidden">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <!-- Eingabe-Formular Card -->
-                <div class="bg-zinc-900/40 border border-zinc-800/80 rounded-xl p-6 h-fit shadow-sm">
-                    <h2 class="text-base font-bold mb-4 text-zinc-100 flex items-center gap-2" id="category-view-title">
-                        <i data-lucide="plus-circle" class="w-4 h-4 text-emerald-500"></i>Eintrag hinzufügen
-                    </h2>
+                <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-6 h-fit shadow-sm">
+                    <h2 class="text-lg font-semibold mb-4" id="category-view-title">Eintrag hinzufügen</h2>
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-xs font-semibold text-zinc-400 mb-1.5" id="category-label-name">Name / Objekt</label>
-                            <input type="text" id="generic-name" placeholder="z.B. Golf, Luna" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all placeholder:text-zinc-600">
+                            <label class="block text-xs font-medium text-gray-500 dark:text-zinc-400 mb-1.5">Name (Was soll getracked werden?)</label>
+                            <input type="text" id="generic-name" class="w-full bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-zinc-400 mb-1.5">Maßnahme / Option</label>
-                            <select id="generic-type" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all"></select>
+                            <label class="block text-xs font-medium text-gray-500 dark:text-zinc-400 mb-1.5">Intervall / Termin</label>
+                            <select id="generic-type" onchange="handleTypeChange(this)" class="w-full bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500"></select>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-zinc-400 mb-1.5">Datum (Klicken zum Öffnen)</label>
-                            <div class="relative">
-                                <input type="date" id="generic-datum" onclick="this.showPicker()" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all cursor-pointer">
-                            </div>
+                            <label class="block text-xs font-medium text-gray-500 dark:text-zinc-400 mb-1.5">Datum</label>
+                            <input type="date" id="generic-datum" onclick="this.showPicker()" class="w-full bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 cursor-pointer">
                         </div>
-                        <button onclick="saveGenericEntry()" class="w-full bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white text-sm font-semibold py-2.5 rounded-lg transition-all shadow-md shadow-emerald-950/20 cursor-pointer flex items-center justify-center gap-2">
-                            <i data-lucide="save" class="w-4 h-4"></i>Speichern
-                        </button>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 dark:text-zinc-400 mb-1.5">Kosten (optional)</label>
+                            <input type="number" id="generic-cost" step="0.01" placeholder="0.00" class="w-full bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <button onclick="saveGenericEntry()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium py-2 rounded-lg transition-colors cursor-pointer">Speichern</button>
                     </div>
                 </div>
-                <!-- Historien Card -->
-                <div class="lg:col-span-2 bg-zinc-900/40 border border-zinc-800/80 rounded-xl overflow-hidden shadow-sm">
-                    <div class="px-6 py-4 border-b border-zinc-800/80 flex items-center justify-between">
-                        <h2 class="font-semibold text-sm text-zinc-200 flex items-center gap-2">
-                            <i data-lucide="history" class="w-4 h-4 text-zinc-400"></i>Historie & Logs
-                        </h2>
+                <div class="lg:col-span-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm">
+                    <div class="px-6 py-4 border-b border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-900/50 flex flex-col sm:flex-row justify-between gap-4">
+                        <h2 class="font-semibold self-center sm:self-start">Historie</h2>
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <input type="text" id="search-history" onkeyup="renderGenericHistoryList(currentCategory)" placeholder="Suchen (Name, Termin)..." class="flex-1 sm:w-48 bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-emerald-500">
+                            <select id="sort-history" onchange="renderGenericHistoryList(currentCategory)" class="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-emerald-500">
+                                <option value="date-desc">Neueste zuerst</option>
+                                <option value="date-asc">Älteste zuerst</option>
+                                <option value="cost-desc">Höchste Kosten</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="divide-y divide-zinc-800/60" id="generic-history-list"></div>
+                    <div class="divide-y divide-gray-100 dark:divide-zinc-800" id="generic-history-list"></div>
                 </div>
             </div>
         </div>
 
-        <!-- KONFIGURATION & DATEN -->
-        <div id="settings" class="tab-content hidden space-y-8 animate-fade-in">
-            <div class="bg-zinc-900/40 border border-zinc-800/80 rounded-xl p-6 shadow-sm">
-                <h2 class="text-base font-bold mb-1 text-zinc-100 flex items-center gap-2"><i data-lucide="sliders" class="w-4 h-4 text-zinc-400"></i>Struktur-Editor (Kategorien & Optionen)</h2>
-                <p class="text-zinc-400 text-xs mb-6">Erstelle neue Tracker-Bereiche oder füge Intervalle hinzu.</p>
-                
+        <div id="settings" class="tab-content hidden space-y-8">
+            <h1 class="text-2xl font-bold tracking-tight mb-6">Einstellungen</h1>
+            <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-6 shadow-sm">
+                <h2 class="text-lg font-semibold mb-2">Struktur-Editor (Kategorien & Termine)</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Kategorie erstellen -->
-                    <div class="bg-zinc-950/50 border border-zinc-800/60 rounded-xl p-4 space-y-3">
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5"><i data-lucide="folder-plus" class="w-3.5 h-3.5"></i>Neue Hauptkategorie</h3>
-                        <input type="text" id="new-cat-id" placeholder="ID (z.B. immobilie)" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-emerald-500 transition-all placeholder:text-zinc-600">
-                        <input type="text" id="new-cat-label" placeholder="Anzeigename (z.B. Hauspflege)" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-emerald-500 transition-all placeholder:text-zinc-600">
-                        <button onclick="createNewCategory()" class="w-full bg-zinc-800 hover:bg-zinc-700 active:scale-[0.98] text-xs py-2 rounded-lg font-semibold transition-all cursor-pointer">Kategorie erstellen</button>
-                    </div>
-                    
-                    <!-- Option zuweisen -->
-                    <div class="bg-zinc-950/50 border border-zinc-800/60 rounded-xl p-4 space-y-3">
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5"><i data-lucide="file-plus" class="w-3.5 h-3.5"></i>Option / Maßnahme zuweisen</h3>
-                        <select id="add-opt-cat-select" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-emerald-500 transition-all"></select>
-                        <input type="text" id="new-opt-name" placeholder="Name (z.B. Heizungswartung)" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-emerald-500 transition-all placeholder:text-zinc-600">
-                        
-                        <select id="new-opt-mode" onchange="toggleIntervalInput()" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-emerald-500 transition-all">
-                            <option value="interval">Mit Intervall (Erinnerung)</option>
-                            <option value="log">Nur Log (Reine Historie)</option>
-                        </select>
-                        
-                        <div id="interval-days-container" class="flex gap-2">
-                            <input type="number" id="new-opt-interval" placeholder="Wert" class="w-2/3 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-emerald-500 transition-all placeholder:text-zinc-600">
-                            <select id="new-opt-unit" class="w-1/3 bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-emerald-500 transition-all">
-                                <option value="days">Tage</option>
-                                <option value="weeks">Wochen</option>
-                                <option value="months">Monate</option>
-                                <option value="years">Jahre</option>
-                            </select>
+                    <div class="bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-lg p-4">
+                        <h3 class="text-sm font-medium mb-3 text-gray-700 dark:text-zinc-300">Neue Hauptkategorie anlegen</h3>
+                        <div class="space-y-3">
+                            <input type="text" id="new-cat-label" placeholder="Kategorie (z.B. Schule)" class="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-md px-3 py-1.5 text-xs">
+                            <button onclick="createNewCategoryFromSettings()" class="w-full bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 dark:hover:bg-zinc-700 text-xs py-2 rounded font-medium cursor-pointer transition-colors">Kategorie erstellen</button>
                         </div>
-                        
-                        <button onclick="addOptionToCategory()" class="w-full bg-zinc-800 hover:bg-zinc-700 active:scale-[0.98] text-xs py-2 rounded-lg font-semibold transition-all cursor-pointer">Option hinzufügen</button>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-lg p-4">
+                        <h3 class="text-sm font-medium mb-3 text-gray-700 dark:text-zinc-300">Neuen Termin zuweisen</h3>
+                        <div class="space-y-3">
+                            <select id="add-opt-cat-select" class="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-md px-3 py-1.5 text-xs"></select>
+                            <input type="text" id="new-opt-name" placeholder="Name (z.B. Prophylaxe)" class="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-md px-3 py-1.5 text-xs">
+                            <div class="flex gap-2">
+                                <select id="new-opt-mode" onchange="toggleIntervalInput()" class="flex-1 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-md px-3 py-1.5 text-xs">
+                                    <option value="interval">Mit Intervall</option>
+                                    <option value="log">Einmalig</option>
+                                </select>
+                                <div id="interval-days-container" class="flex-1"><input type="number" id="new-opt-interval" placeholder="Tage (z.B. 182)" class="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-md px-3 py-1.5 text-xs"></div>
+                            </div>
+                            <input type="number" id="new-opt-est-cost" step="0.01" placeholder="Geschätzte Kosten in € (optional)" class="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-md px-3 py-1.5 text-xs">
+                            
+                            <button onclick="addOptionToCategory()" class="w-full bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 dark:hover:bg-zinc-700 text-xs py-2 rounded font-medium cursor-pointer transition-colors">Termin hinzufügen</button>
+                        </div>
                     </div>
                 </div>
-                <div class="mt-6 border-t border-zinc-800/80 pt-6">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-rose-400 mb-3 flex items-center gap-1.5"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i>Kategorien löschen</h3>
+                <div class="mt-6 border-t border-gray-200 dark:border-zinc-800 pt-6">
+                    <h3 class="text-sm font-medium mb-3 text-rose-500">Kategorien löschen</h3>
                     <div id="delete-management-list" class="flex flex-wrap gap-2"></div>
                 </div>
             </div>
-
-            <!-- Import/Export Card -->
-            <div class="bg-zinc-900/40 border border-zinc-800/80 rounded-xl p-6 shadow-sm">
-                <h2 class="text-base font-bold mb-1 text-zinc-100 flex items-center gap-2"><i data-lucide="database" class="w-4 h-4 text-zinc-400"></i>Daten-Export & Import</h2>
-                <p class="text-zinc-400 text-xs mb-6">Sichere deine Daten lokal als JSON-Datei oder lade einen bestehenden Export hoch.</p>
+            <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-6 shadow-sm">
+                <h2 class="text-lg font-semibold mb-2">Export & Import</h2>
                 <div class="flex flex-col sm:flex-row gap-4">
-                    <button onclick="exportFullBackup()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 active:scale-[0.98] border border-zinc-700/60 text-zinc-200 text-sm font-semibold py-2.5 rounded-lg transition-all cursor-pointer flex items-center justify-center gap-2">
-                        <i data-lucide="download" class="w-4 h-4"></i>Daten exportieren (JSON)
-                    </button>
-                    <label class="flex-1 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white text-sm font-semibold py-2.5 rounded-lg transition-all shadow-md text-center relative block cursor-pointer">
-                        <span class="flex items-center justify-center gap-2"><i data-lucide="upload" class="w-4 h-4"></i>Daten importieren</span>
-                        <input type="file" id="import-backup-file" onchange="importFullBackup()" class="hidden" accept=".json">
+                    <button onclick="exportFullBackup()" class="flex-1 bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 dark:hover:bg-zinc-700 text-sm font-medium py-2.5 rounded-lg cursor-pointer transition-colors">Daten exportieren (JSON)</button>
+                    <label class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium py-2.5 rounded-lg cursor-pointer text-center relative block transition-colors">
+                        <span>Daten importieren</span>
+                        <input type="file" id="import-backup-file" onchange="importFullBackup()" class="hidden">
                     </label>
                 </div>
             </div>
@@ -171,252 +159,397 @@
     </main>
 
     <script>
-        const defaultCategories = {
-            'katzen': { label: 'Katzen', icon: 'paw', types: { 'Zeckenmittel': 28, 'Wurmkur': 91, 'Impfung': 365 } },
-            'auto': { label: 'Autos', icon: 'car', types: { 'TÜV': 730, 'Bremsen': 0, 'Reifen': 0, 'Licht': 0 } },
-            'zahnarzt': { label: 'Zahnarzt', icon: 'activity', types: { 'Prophylaxe': 182 } },
-            'zoo': { label: 'Zoo', icon: 'map', types: { 'Besuch': 0 } },
-            'garten': { label: 'Garten', icon: 'sprout', types: { 'Düngung': 182 } }
-        };
-
+        // --- 1. DATENSTRUKTUR & HILFSFUNKTIONEN ---
+        const defaultCategories = {'katzen': { label: 'Katzen', types: { 'Zeckenmittel': 28, 'Wurmkur': 91, 'Impfung': 365 } }, 'auto': { label: 'Autos', types: { 'TÜV': 730, 'Bremsen': 0, 'Reifen': 0, 'Licht': 0 } }, 'zahnarzt': { label: 'Zahnarzt', types: { 'Prophylaxe': 182 } }};
         let currentCategory = 'dashboard';
+        let chartInstance = null;
+        
+        function getInterval(typeData) { return typeof typeData === 'object' ? typeData.interval : typeData; }
+        function getEstCost(typeData) { return typeof typeData === 'object' ? typeData.estCost : null; }
+        
+        function formatInterval(days) { return days === 0 ? 'Einmalig' : (days >= 365 ? `${Math.round(days/365)} Jahr(e)` : (days >= 30 ? `${Math.round(days/30.5)} Monat(e)` : `${days} Tage`)); }
+        
+        function getCategoriesConfig() { if(!localStorage.getItem('tracker_categories')) localStorage.setItem('tracker_categories', JSON.stringify(defaultCategories)); return JSON.parse(localStorage.getItem('tracker_categories')); }
+        function getEntries(catId) { let entries = JSON.parse(localStorage.getItem(`entries_${catId}`)) || []; entries.forEach(e => { if(!e.id) e.id = Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }); return entries; }
 
-        function formatInterval(days) {
-            if (!days || days === 0) return 'Nur Log';
-            if (days === 730) return '2 Jahre';
-            if (days === 365) return '1 Jahr';
-            if (days === 182 || days === 180) return '6 Monate';
-            if (days === 91 || days === 90) return '3 Monate';
-            if (days === 28) return '4 Wochen';
-            
-            if (days >= 365) {
-                const j = Math.round(days / 365);
-                return `${j} ${j === 1 ? 'Jahr' : 'Jahre'}`;
+        // --- 2. DARK/LIGHT MODE ---
+        function initTheme() {
+            if (localStorage.getItem('theme') === 'light') {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('theme-icon').innerText = '🌙';
             }
-            if (days >= 30) {
-                const m = Math.round(days / 30.5);
-                return `${m} ${m === 1 ? 'Monat' : 'Monate'}`;
+        }
+        function toggleTheme() {
+            const html = document.documentElement;
+            html.classList.toggle('dark');
+            const isDark = html.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            document.getElementById('theme-icon').innerText = isDark ? '☀️' : '🌙';
+            if(chartInstance && currentCategory !== 'dashboard' && currentCategory !== 'settings') {
+                renderGenericHistoryList(currentCategory); 
             }
-            if (days >= 7) {
-                const w = Math.round(days / 7);
-                return `${w} ${w === 1 ? 'Woche' : 'Wochen'}`;
-            }
-            return `${days} Tage`;
         }
 
-        function getCategoriesConfig() {
-            if(!localStorage.getItem('tracker_categories')) {
-                localStorage.setItem('tracker_categories', JSON.stringify(defaultCategories));
-            }
-            return JSON.parse(localStorage.getItem('tracker_categories'));
-        }
-
-        function getEntries(catId) {
-            return JSON.parse(localStorage.getItem(`entries_${catId}`)) || [];
-        }
-
+        // --- 3. NAVIGATION & UI ---
         function renderNavigation() {
             const navContainer = document.getElementById('navigation-tabs');
             const config = getCategoriesConfig();
             
-            let html = `<button class="nav-btn px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${currentCategory === 'dashboard' ? 'bg-zinc-800 text-zinc-100 shadow-sm' : 'text-zinc-400 hover:text-zinc-200'}" onclick="switchTab('dashboard')"><i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i>Übersicht</button>`;
-            
+            let html = `<button class="px-4 py-1.5 text-sm font-medium rounded-lg ${currentCategory === 'dashboard' ? 'bg-gray-200 dark:bg-zinc-800' : 'text-gray-500 dark:text-zinc-400'}" onclick="switchTab('dashboard')">Übersicht</button>`;
             Object.keys(config).forEach(key => {
-                const iconName = config[key].icon || 'tag';
-                html += `<button class="nav-btn px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${currentCategory === key ? 'bg-zinc-800 text-zinc-100 shadow-sm' : 'text-zinc-400 hover:text-zinc-200'}" onclick="switchTab('${key}')"><i data-lucide="${iconName}" class="w-3.5 h-3.5"></i>${config[key].label}</button>`;
+                html += `<button class="px-4 py-1.5 text-sm font-medium rounded-lg ${currentCategory === key ? 'bg-gray-200 dark:bg-zinc-800' : 'text-gray-500 dark:text-zinc-400'}" onclick="switchTab('${key}')">${config[key].label}</button>`;
             });
-            
-            html += `<button class="nav-btn px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${currentCategory === 'settings' ? 'bg-zinc-800 text-zinc-100 shadow-sm' : 'text-zinc-400 hover:text-zinc-200'}" onclick="switchTab('settings')"><i data-lucide="sliders" class="w-3.5 h-3.5"></i>Daten</button>`;
+            html += `<button class="px-3 py-1 text-sm font-bold rounded-lg border border-dashed border-emerald-600/50 text-emerald-500 hover:bg-emerald-500/10 transition-all cursor-pointer" onclick="promptCreateCategoryGlobal()">+ Neu</button>`;
             
             navContainer.innerHTML = html;
-            lucide.createIcons();
         }
-
+        
+        function promptCreateCategoryGlobal() { const label = prompt("Name der neuen Kategorie:"); if (label && label.trim()) { const targetId = saveNewCategoryLogic(label.trim()); if (targetId) switchTab(targetId); } }
+        
         function switchTab(tabId) {
             currentCategory = tabId;
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.replace('block', 'hidden'));
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.replace('block', 'hidden')); 
             renderNavigation();
+            
+            const searchInput = document.getElementById('search-history');
+            if(searchInput) searchInput.value = '';
 
-            if (tabId === 'dashboard') {
-                document.getElementById('dashboard').classList.replace('hidden', 'block');
-                renderDashboard();
-            } else if (tabId === 'settings') {
-                document.getElementById('settings').classList.replace('hidden', 'block');
-                renderSettingsPanel();
-            } else {
-                document.getElementById('dynamic-category-view').classList.replace('hidden', 'block');
-                renderGenericCategoryPage(tabId);
-            }
+            if (tabId === 'dashboard') { document.getElementById('dashboard').classList.replace('hidden', 'block'); renderDashboard(); }
+            else if (tabId === 'settings') { document.getElementById('settings').classList.replace('hidden', 'block'); renderSettingsPanel(); }
+            else { document.getElementById('dynamic-category-view').classList.replace('hidden', 'block'); renderGenericCategoryPage(tabId); }
         }
 
+        // --- 4. KATEGORIE-ANSICHT (CRUD) ---
         function renderGenericCategoryPage(catId) {
             const config = getCategoriesConfig()[catId];
-            document.getElementById('category-view-title').innerHTML = `<i data-lucide="${config.icon || 'tag'}" class="w-4 h-4 text-emerald-500"></i>${config.label} bearbeiten`;
-            document.getElementById('category-label-name').innerText = `Name / Objekt (${config.label})`;
-            
+            document.getElementById('category-view-title').innerText = `${config.label} bearbeiten`;
             const select = document.getElementById('generic-type');
-            select.innerHTML = Object.keys(config.types).map(t => `<option value="${t}">${t} (${formatInterval(config.types[t])})</option>`).join('');
             
+            const types = config.types || {};
+            const typeKeys = Object.keys(types);
+            let optionsHtml = '';
+            
+            if (typeKeys.length === 0) {
+                optionsHtml = `<option value="" disabled selected>Bitte wählen...</option>`;
+            } else {
+                optionsHtml = typeKeys.map(t => `<option value="${t}">${t} (${formatInterval(getInterval(types[t]))})</option>`).join('');
+            }
+            optionsHtml += `<option value="__NEW__" class="font-bold text-emerald-500">+ Neuen Termin anlegen...</option>`;
+            select.innerHTML = optionsHtml;
+            if (typeKeys.length === 0) select.value = "";
+            
+            handleTypeChange(select);
             renderGenericHistoryList(catId);
-            lucide.createIcons();
+        }
+
+        function triggerNewTerminPopup() {
+            const termName = prompt("Name des neuen Termins:");
+            if (!termName || !termName.trim()) return;
+            const daysStr = prompt("Intervall in Tagen (0 für einmalig):", "0");
+            if (daysStr === null) return;
+            const estCostStr = prompt("Geschätzte Kosten in € (optional):", "");
+            
+            const days = parseInt(daysStr) || 0;
+            const estCost = parseFloat(estCostStr) || null;
+            const config = getCategoriesConfig();
+            
+            if (!config[currentCategory].types) config[currentCategory].types = {};
+            config[currentCategory].types[termName.trim()] = { interval: days, estCost: estCost };
+            localStorage.setItem('tracker_categories', JSON.stringify(config));
+            
+            renderGenericCategoryPage(currentCategory);
+            document.getElementById('generic-type').value = termName.trim();
+            handleTypeChange(document.getElementById('generic-type'));
+        }
+
+        function handleTypeChange(selectElement) {
+            if (!selectElement) return;
+            if (selectElement.value === '__NEW__') {
+                selectElement.selectedIndex = 0; 
+                triggerNewTerminPopup();
+            } else {
+                const config = getCategoriesConfig()[currentCategory];
+                if (config && config.types && config.types[selectElement.value]) {
+                    const estCost = getEstCost(config.types[selectElement.value]);
+                    document.getElementById('generic-cost').value = estCost !== null ? estCost : '';
+                }
+            }
         }
 
         function saveGenericEntry() {
             const name = document.getElementById('generic-name').value.trim();
             const type = document.getElementById('generic-type').value;
             const date = document.getElementById('generic-datum').value;
-
-            if(!name || !date) return alert("Bitte alle Felder ausfüllen.");
-
-            const entries = getEntries(currentCategory);
-            entries.push({ name, type, date });
-            entries.sort((a,b) => new Date(b.date) - new Date(a.date));
+            const cost = document.getElementById('generic-cost').value.trim();
             
+            if(!name || !type || type === '__NEW__' || !date) return alert("Pflichtfelder ausfüllen!");
+            
+            const entries = getEntries(currentCategory);
+            entries.push({ id: Date.now().toString(36), name, type, date, cost: cost || null });
+            entries.sort((a,b) => new Date(b.date) - new Date(a.date));
             localStorage.setItem(`entries_${currentCategory}`, JSON.stringify(entries));
-            document.getElementById('generic-name').value = "";
-            document.getElementById('generic-datum').value = "";
+            
+            document.getElementById('generic-name').value = ""; document.getElementById('generic-cost').value = "";
             renderGenericCategoryPage(currentCategory);
         }
 
-        function getStatusInfo(targetDateStr, intervalDays) {
-            if(!intervalDays || intervalDays === 0) return { text: "Dokumentiert", class: "text-zinc-400 bg-zinc-900 border border-zinc-800/60" };
-            const nextDate = new Date(new Date(targetDateStr).getTime() + (intervalDays * 24 * 60 * 60 * 1000));
-            const today = new Date(); today.setHours(0,0,0,0);
-            const diffDays = Math.ceil((nextDate - today) / (1000 * 60 * 60 * 24));
-            const formattedDate = nextDate.toLocaleDateString('de-DE');
-
-            if (diffDays <= 0) return { text: `Überfällig seit ${formattedDate}`, status: 'red', class: "text-rose-400 bg-rose-500/10 border border-rose-500/20 shadow-[0_0_15px_rgba(244,63,94,0.05)]" };
-            if (diffDays <= 30) return { text: `Fällig am ${formattedDate} (In ${diffDays} T.)`, status: 'yellow', class: "text-amber-400 bg-amber-500/10 border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.05)]" };
-            return { text: `OK bis ${formattedDate}`, status: 'green', class: "text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.05)]" };
+        function editEntry(catId, entryId) {
+            const entries = getEntries(catId);
+            const entry = entries.find(e => e.id === entryId);
+            if (!entry) return;
+            
+            const newDate = prompt(`Neues Datum (YYYY-MM-DD):`, entry.date);
+            if (newDate) {
+                entry.date = newDate;
+                const newCost = prompt(`Kosten (in €):`, entry.cost || "");
+                if (newCost !== null) { entry.cost = newCost.trim() === "" ? null : newCost.trim(); }
+                entries.sort((a,b) => new Date(b.date) - new Date(a.date));
+                localStorage.setItem(`entries_${catId}`, JSON.stringify(entries));
+                renderGenericHistoryList(catId);
+            }
         }
 
+        function deleteEntry(catId, entryId) {
+            if(confirm("Wirklich löschen?")) { 
+                let entries = getEntries(catId).filter(e => e.id !== entryId); 
+                localStorage.setItem(`entries_${catId}`, JSON.stringify(entries)); 
+                renderGenericHistoryList(catId); 
+            }
+        }
+
+        function getStatusInfo(targetDateStr, intervalDays) {
+            let nextDate = (intervalDays === 0 || intervalDays === undefined) ? new Date(targetDateStr) : new Date(new Date(targetDateStr).getTime() + (intervalDays * 86400000));
+            const diffDays = Math.ceil((nextDate.setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / 86400000);
+            if (diffDays < 0) return { text: `Fällig seit ${nextDate.toLocaleDateString('de-DE')}`, status: 'red', class: "text-rose-600 bg-rose-100 dark:text-rose-400 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20" };
+            if (diffDays === 0) return { text: `Heute fällig!`, status: 'red', class: "text-rose-600 bg-rose-100 dark:text-rose-400 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20" };
+            if (diffDays <= 14) return { text: `Fällig am ${nextDate.toLocaleDateString('de-DE')} (In ${diffDays} T.)`, status: 'yellow', class: "text-amber-600 bg-amber-100 dark:text-amber-400 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20" };
+            return { text: `Geplant für ${nextDate.toLocaleDateString('de-DE')}`, status: 'green', class: "text-emerald-600 bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20" };
+        }
+
+        // --- 5. HISTORIE & AUSWERTUNG ---
         function renderGenericHistoryList(catId) {
             const container = document.getElementById('generic-history-list');
-            const entries = getEntries(catId);
+            let entries = getEntries(catId);
             const config = getCategoriesConfig()[catId];
-            if(entries.length === 0) { container.innerHTML = `<div class="p-8 text-sm text-zinc-500 text-center">Keine Einträge aufgezeichnet.</div>`; return; }
+            
+            const searchText = (document.getElementById('search-history')?.value || '').toLowerCase();
+            const sortMode = document.getElementById('sort-history')?.value || 'date-desc';
+            
+            if (searchText) {
+                entries = entries.filter(e => e.name.toLowerCase().includes(searchText) || e.type.toLowerCase().includes(searchText));
+            }
+            
+            entries.sort((a, b) => {
+                if(sortMode === 'date-desc') return new Date(b.date) - new Date(a.date);
+                if(sortMode === 'date-asc') return new Date(a.date) - new Date(b.date);
+                if(sortMode === 'cost-desc') return (parseFloat(b.cost)||0) - (parseFloat(a.cost)||0);
+            });
+            
+            if (entries.length === 0) {
+                container.innerHTML = `<div class="p-6 text-sm text-gray-500 dark:text-zinc-500 text-center">Keine passenden Einträge.</div>`;
+                if(chartInstance) chartInstance.destroy();
+                return;
+            }
 
             const latestMap = {};
-            entries.forEach(e => { const key = `${e.name}-${e.type}`; if(!latestMap[key]) latestMap[key] = e.date; });
+            getEntries(catId).forEach(e => { const key = `${e.name}-${e.type}`; if(!latestMap[key]) latestMap[key] = e.date; });
 
-            container.innerHTML = entries.map(e => {
+            let html = entries.map(e => {
                 const isLatest = latestMap[`${e.name}-${e.type}`] === e.date;
-                const status = isLatest ? getStatusInfo(e.date, config.types[e.type] || 0) : { text: "Historie", class: "text-zinc-500 bg-zinc-950/20 border border-transparent" };
+                const interval = config.types ? getInterval(config.types[e.type]) : undefined;
+                const status = isLatest ? getStatusInfo(e.date, interval) : { text: "Historie", class: "text-gray-500 dark:text-zinc-500 bg-gray-100 dark:bg-zinc-950/40 border border-gray-200 dark:border-zinc-800" };
+                const costDisplay = e.cost ? `<span class="text-xs text-amber-600 dark:text-amber-500 font-medium ml-3">| ${e.cost} €</span>` : '';
+                
                 return `
-                    <div class="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-zinc-900/20 hover:scale-[1.005] active:scale-[0.998] transition-all duration-200">
-                        <div class="flex items-start gap-3">
-                            <div class="p-2 rounded-lg bg-zinc-950/40 border border-zinc-800/40 mt-0.5"><i data-lucide="${config.icon || 'tag'}" class="w-4 h-4 text-zinc-400"></i></div>
-                            <div>
-                                <span class="text-xs font-bold text-emerald-500 tracking-wide uppercase block">${e.name}</span>
-                                <span class="text-sm font-semibold text-zinc-200">${e.type}</span>
-                                <span class="text-xs text-zinc-500 block sm:inline sm:ml-2">ausgeführt am ${new Date(e.date).toLocaleDateString('de-DE')}</span>
-                            </div>
+                    <div class="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                            <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-500 block uppercase">${e.name}</span>
+                            <span class="text-sm font-medium text-gray-800 dark:text-zinc-200">${e.type} ${costDisplay}</span>
+                            <span class="text-xs text-gray-500 dark:text-zinc-500 ml-2">am ${new Date(e.date).toLocaleDateString('de-DE')}</span>
                         </div>
-                        <div class="text-xs px-2.5 py-1 rounded-md font-medium w-fit ${status.class}">${status.text}</div>
+                        <div class="flex items-center gap-3">
+                            <div class="text-xs px-2.5 py-1 rounded-md font-medium ${status.class} mr-2">${status.text}</div>
+                            <button onclick="editEntry('${catId}', '${e.id}')" class="text-gray-400 hover:text-emerald-500 dark:text-zinc-500 dark:hover:text-emerald-400 text-lg" title="Bearbeiten">✏️</button>
+                            <button onclick="deleteEntry('${catId}', '${e.id}')" class="text-gray-400 hover:text-rose-500 dark:text-zinc-500 dark:hover:text-rose-400 text-lg" title="Löschen">🗑️</button>
+                        </div>
                     </div>`;
             }).join('');
-            lucide.createIcons();
+
+            const years = [...new Set(entries.map(e => new Date(e.date).getFullYear()))].sort();
+            html += `
+                <div class="px-6 py-6 border-t border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950/50">
+                    <div class="mb-6">
+                        <h3 class="text-xs font-bold text-gray-500 dark:text-zinc-400 uppercase tracking-wider mb-3">Kostenanalyse (Zahlen)</h3>
+                        <div class="space-y-1 text-sm">`;
+
+            years.forEach(year => {
+                const yearCost = entries
+                    .filter(e => new Date(e.date).getFullYear() === year)
+                    .reduce((sum, e) => sum + (parseFloat(e.cost) || 0), 0);
+                html += `
+                            <div class="flex justify-between max-w-xs">
+                                <span class="text-gray-500 dark:text-zinc-500">${year}:</span>
+                                <span class="font-bold text-gray-900 dark:text-zinc-200">${yearCost.toFixed(2)} €</span>
+                            </div>`;
+            });
+
+            const totalCost = entries.reduce((sum, e) => sum + (parseFloat(e.cost) || 0), 0);
+            html += `
+                            <div class="flex justify-between max-w-xs pt-2 mt-1 border-t border-gray-200 dark:border-zinc-800">
+                                <span class="text-gray-700 dark:text-zinc-300 font-semibold">Gesamt:</span>
+                                <span class="font-bold text-emerald-600 dark:text-emerald-500">${totalCost.toFixed(2)} €</span>
+                            </div>
+                        </div>
+                    </div>`;
+
+            // Diagramm nur hinzufügen, wenn Gesamtkosten > 0 sind
+            if (totalCost > 0) {
+                html += `
+                    <div>
+                        <h3 class="text-xs font-bold text-gray-500 dark:text-zinc-400 uppercase tracking-wider mb-2">Grafischer Verlauf</h3>
+                        <div class="w-full max-w-2xl mx-auto"><canvas id="costChart"></canvas></div>
+                    </div>`;
+            }
+            
+            html += `</div>`; // Schließt den Haupt-Container der Analyse
+
+            container.innerHTML = html;
+            
+            // Chart nur rendern, wenn Kosten vorhanden sind (sonst altes Chart löschen)
+            if (totalCost > 0) {
+                renderChart(entries); 
+            } else if (chartInstance) {
+                chartInstance.destroy();
+            }
         }
 
+        function renderChart(filteredEntries) {
+            const ctx = document.getElementById('costChart');
+            if(!ctx) return;
+            if(chartInstance) chartInstance.destroy();
+
+            const costPerYear = {};
+            filteredEntries.forEach(e => {
+                const year = new Date(e.date).getFullYear();
+                const cost = parseFloat(e.cost) || 0;
+                if(!costPerYear[year]) costPerYear[year] = 0;
+                costPerYear[year] += cost;
+            });
+
+            const years = Object.keys(costPerYear).sort();
+            const costs = years.map(y => costPerYear[y]);
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#a1a1aa' : '#52525b';
+            const gridColor = isDark ? '#27272a' : '#e4e4e7';
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: years,
+                    datasets: [{
+                        label: 'Kosten in €',
+                        data: costs,
+                        backgroundColor: '#10b981',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } },
+                        x: { grid: { display: false }, ticks: { color: textColor } }
+                    }
+                }
+            });
+        }
+
+        // --- 6. DASHBOARD & EINSTELLUNGEN ---
         function renderDashboard() {
             const container = document.getElementById('dashboard-deadline-list');
             const config = getCategoriesConfig();
             let matrixHtml = ""; let cRed = 0, cYellow = 0, cGreen = 0;
-
+            
             Object.keys(config).forEach(catId => {
-                const entries = getEntries(catId); const uniqueAssets = {};
+                const entries = getEntries(catId);
+                const uniqueAssets = {};
                 entries.forEach(e => { const key = `${e.name}-${e.type}`; if(!uniqueAssets[key]) uniqueAssets[key] = e; });
 
                 Object.values(uniqueAssets).forEach(e => {
-                    const interval = config[catId].types[e.type]; if(!interval || interval === 0) return;
-                    const status = getStatusInfo(e.date, interval);
-                    if(status.status === 'red') cRed++; if(status.status === 'yellow') cYellow++; if(status.status === 'green') cGreen++;
-
-                    matrixHtml += `
-                        <div class="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-zinc-900/20 hover:scale-[1.002] transition-all duration-200">
-                            <div class="flex items-center space-x-4">
-                                <div class="w-2 h-2 rounded-full ${status.status === 'red' ? 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.6)]' : status.status === 'yellow' ? 'bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.6)]' : 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.6)]'}"></div>
-                                <div class="flex items-start gap-2.5">
-                                    <div class="p-1.5 rounded-md bg-zinc-950/40 border border-zinc-800/40 hidden sm:block"><i data-lucide="${config[catId].icon || 'tag'}" class="w-3.5 h-3.5 text-zinc-500"></i></div>
+                    const types = config[catId].types || {};
+                    const interval = types[e.type] !== undefined ? getInterval(types[e.type]) : undefined;
+                    
+                    if (interval !== undefined) {
+                        const status = getStatusInfo(e.date, interval);
+                        if(status.status === 'red') cRed++; if(status.status === 'yellow') cYellow++; if(status.status === 'green') cGreen++;
+                        
+                        matrixHtml += `
+                            <div class="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-gray-100 dark:hover:bg-zinc-900/30 transition-colors">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-2 h-2 rounded-full ${status.status === 'red' ? 'bg-rose-500' : status.status === 'yellow' ? 'bg-amber-500' : 'bg-emerald-500'}"></div>
                                     <div>
-                                        <span class="text-sm font-semibold text-zinc-100">${e.name} <span class="text-xs text-zinc-500 font-normal">(${config[catId].label})</span></span>
-                                        <span class="text-xs text-zinc-400 block">${e.type} <span class="text-zinc-600">•</span> Intervall: ${formatInterval(interval)}</span>
+                                        <span class="text-sm font-semibold text-gray-900 dark:text-zinc-100">${e.name} <span class="text-xs text-gray-500 dark:text-zinc-500 font-normal">(${config[catId].label})</span></span>
+                                        <span class="text-xs text-gray-500 dark:text-zinc-400 block">${e.type} (Intervall: ${formatInterval(interval)})</span>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="text-xs px-3 py-1 rounded-lg font-medium ${status.class}">${status.text}</div>
-                        </div>`;
+                                <div class="text-xs px-3 py-1 rounded-lg font-medium ${status.class}">${status.text}</div>
+                            </div>`;
+                    }
                 });
             });
-            document.getElementById('count-red').innerText = cRed;
-            document.getElementById('count-yellow').innerText = cYellow;
-            document.getElementById('count-green').innerText = cGreen;
-            container.innerHTML = matrixHtml || `<div class="p-8 text-sm text-zinc-500 text-center">Keine aktiven Überwachungsfristen generiert.</div>`;
-            lucide.createIcons();
+            
+            document.getElementById('count-red').innerText = cRed; document.getElementById('count-yellow').innerText = cYellow; document.getElementById('count-green').innerText = cGreen;
+            container.innerHTML = matrixHtml || `<div class="p-6 text-sm text-gray-500 text-center">Keine Überwachungsfristen vorhanden.</div>`;
         }
 
-        function toggleIntervalInput() {
-            const mode = document.getElementById('new-opt-mode').value;
-            const container = document.getElementById('interval-days-container');
-            if(mode === 'log') container.classList.add('hidden');
-            else container.classList.remove('hidden');
-        }
+        function toggleIntervalInput() { document.getElementById('interval-days-container').classList.toggle('hidden', document.getElementById('new-opt-mode').value === 'log'); }
 
         function renderSettingsPanel() {
             const config = getCategoriesConfig();
             document.getElementById('add-opt-cat-select').innerHTML = Object.keys(config).map(k => `<option value="${k}">${config[k].label}</option>`).join('');
-            document.getElementById('delete-management-list').innerHTML = Object.keys(config).map(k => `
-                <button onclick="deleteCategory('${k}')" class="bg-rose-950/30 hover:bg-rose-900/50 border border-rose-900/30 text-rose-400 text-xs px-3 py-1.5 rounded-lg active:scale-95 transition-all cursor-pointer flex items-center gap-1"><i data-lucide="trash" class="w-3 h-3"></i>${config[k].label} löschen</button>
-            `).join('');
-            toggleIntervalInput();
-            lucide.createIcons();
+            document.getElementById('delete-management-list').innerHTML = Object.keys(config).map(k => `<button onclick="deleteCategory('${k}')" class="bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-xs px-3 py-1.5 rounded-lg cursor-pointer">${config[k].label} löschen</button>`).join('');
         }
 
-        function createNewCategory() {
-            const id = document.getElementById('new-cat-id').value.trim().toLowerCase();
-            const label = document.getElementById('new-cat-label').value.trim();
-            if(!id || !label) return alert("Eingaben unvollständig.");
-            const config = getCategoriesConfig(); if(config[id]) return alert("Kategorie existiert bereits.");
-            
-            config[id] = { label: label, icon: 'layers', types: {} };
+        function saveNewCategoryLogic(label) {
+            let id = label.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const config = getCategoriesConfig();
+            if(config[id]) { alert("Existiert bereits."); return null; }
+            config[id] = { label: label, types: {} };
             localStorage.setItem('tracker_categories', JSON.stringify(config));
-            document.getElementById('new-cat-id').value = ""; document.getElementById('new-cat-label').value = "";
-            renderNavigation(); renderSettingsPanel();
+            return id;
+        }
+
+        function createNewCategoryFromSettings() {
+            const label = document.getElementById('new-cat-label').value.trim();
+            if(!label) return alert("Eingabe fehlt.");
+            const newId = saveNewCategoryLogic(label);
+            if (newId) { document.getElementById('new-cat-label').value = ""; renderNavigation(); renderSettingsPanel(); }
         }
 
         function addOptionToCategory() {
             const catId = document.getElementById('add-opt-cat-select').value;
             const optName = document.getElementById('new-opt-name').value.trim();
-            const mode = document.getElementById('new-opt-mode').value;
+            const interval = document.getElementById('new-opt-mode').value === 'interval' ? parseInt(document.getElementById('new-opt-interval').value) : 0;
+            const estCost = parseFloat(document.getElementById('new-opt-est-cost').value) || null;
             
-            if(!optName) return alert("Name der Maßnahme fehlt.");
+            if(!optName) return alert("Name fehlt.");
+            const config = getCategoriesConfig();
+            if(!config[catId].types) config[catId].types = {};
             
-            let interval = 0;
-            if(mode === 'interval') {
-                const val = parseInt(document.getElementById('new-opt-interval').value) || 0;
-                const unit = document.getElementById('new-opt-unit').value;
-                if(val <= 0) return alert("Bitte einen Wert eintragen.");
-                
-                if(unit === 'days') interval = val;
-                else if(unit === 'weeks') interval = val * 7;
-                else if(unit === 'months') interval = val * 30;
-                else if(unit === 'years') interval = val * 365;
-            }
-
-            const config = getCategoriesConfig(); 
-            config[catId].types[optName] = interval;
+            config[catId].types[optName] = { interval: interval, estCost: estCost };
             localStorage.setItem('tracker_categories', JSON.stringify(config));
             
-            document.getElementById('new-opt-name').value = ""; 
-            document.getElementById('new-opt-interval').value = "";
-            alert(`Option erfolgreich zugewiesen.`);
+            document.getElementById('new-opt-name').value = "";
+            document.getElementById('new-opt-est-cost').value = "";
+            alert("Termin hinzugefügt.");
         }
 
         function deleteCategory(catId) {
-            if(!confirm(`Möchtest du diese Kategorie löschen?`)) return;
-            const config = getCategoriesConfig(); delete config[catId];
-            localStorage.setItem('tracker_categories', JSON.stringify(config));
-            localStorage.removeItem(`entries_${catId}`); switchTab('dashboard');
+            if(confirm("Wirklich löschen?")) {
+                const config = getCategoriesConfig(); delete config[catId];
+                localStorage.setItem('tracker_categories', JSON.stringify(config));
+                localStorage.removeItem(`entries_${catId}`); switchTab('dashboard');
+            }
         }
 
         function exportFullBackup() {
@@ -436,15 +569,16 @@
                     if(backup.config) {
                         localStorage.setItem('tracker_categories', JSON.stringify(backup.config));
                         Object.keys(backup.data).forEach(k => { localStorage.setItem(`entries_${k}`, JSON.stringify(backup.data[k])); });
-                        alert("Daten erfolgreich importiert."); switchTab('dashboard');
+                        alert("Daten importiert."); switchTab('dashboard');
                     }
                 } catch (err) { alert("Format ungültig."); }
             };
             reader.readAsText(file);
         }
 
-        // App-Initialisierung
-        renderNavigation();
+        // Init
+        initTheme();
+        renderNavigation(); 
         renderDashboard();
     </script>
 </body>
