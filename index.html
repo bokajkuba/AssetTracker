@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Termin & Kosten Tracker v4.5</title>
+    <title>Termin & Kosten Tracker v4.6</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -125,6 +125,12 @@
 
         <div id="settings" class="tab-content hidden space-y-8">
             <h1 class="text-2xl font-bold tracking-tight mb-6">Einstellungen</h1>
+            
+            <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-6 shadow-sm">
+                <h2 class="text-lg font-semibold mb-4">Kategorien sortieren</h2>
+                <div id="sort-category-list" class="space-y-2"></div>
+            </div>
+
             <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-6 shadow-sm">
                 <h2 class="text-lg font-semibold mb-2">Struktur-Editor (Kategorien & Termine)</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -158,15 +164,22 @@
                     <div id="delete-management-list" class="flex flex-wrap gap-2"></div>
                 </div>
             </div>
+
             <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-6 shadow-sm">
                 <h2 class="text-lg font-semibold mb-2">Export & Import</h2>
                 <div class="flex flex-col sm:flex-row gap-4">
-                    <button onclick="exportFullBackup()" class="flex-1 bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 dark:hover:bg-zinc-700 text-sm font-medium py-2.5 rounded-lg cursor-pointer transition-colors">Daten exportieren (JSON)</button>
+                    <button onclick="exportFullBackup()" class="flex-1 bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 dark:hover:bg-zinc-700 text-sm font-medium py-2.5 rounded-lg cursor-pointer transition-colors">Daten exportieren / Kopieren</button>
                     <label class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium py-2.5 rounded-lg cursor-pointer text-center relative block transition-colors">
                         <span>Daten importieren</span>
                         <input type="file" id="import-backup-file" onchange="importFullBackup()" class="hidden">
                     </label>
                 </div>
+            </div>
+
+            <div class="bg-white dark:bg-zinc-900 border border-rose-900/50 rounded-xl p-6 shadow-sm">
+                <h2 class="text-lg font-semibold text-rose-500 mb-2">Gefahrenzone</h2>
+                <p class="text-sm text-gray-500 dark:text-zinc-400 mb-4">Hier kannst du den Tracker in seinen Ursprungszustand zurückversetzen. Alle Daten gehen verloren.</p>
+                <button onclick="nukeAllData()" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg font-bold transition-colors cursor-pointer">ALLES LÖSCHEN & ZURÜCKSETZEN</button>
             </div>
         </div>
     </main>
@@ -179,11 +192,28 @@
         
         function getInterval(typeData) { return typeof typeData === 'object' ? typeData.interval : typeData; }
         function getEstCost(typeData) { return typeof typeData === 'object' ? typeData.estCost : null; }
-        
         function formatInterval(days) { return days === 0 ? 'Einmalig' : (days >= 365 ? `${Math.round(days/365)} Jahr(e)` : (days >= 30 ? `${Math.round(days/30.5)} Monat(e)` : `${days} Tage`)); }
         
-        function getCategoriesConfig() { if(!localStorage.getItem('tracker_categories')) localStorage.setItem('tracker_categories', JSON.stringify(defaultCategories)); return JSON.parse(localStorage.getItem('tracker_categories')); }
-        function getEntries(catId) { let entries = JSON.parse(localStorage.getItem(`entries_${catId}`)) || []; entries.forEach(e => { if(!e.id) e.id = Date.now().toString(36) + Math.random().toString(36).substr(2, 5); if(e.done === undefined) e.done = false; }); return entries; }
+        // NEU: Lädt die Kategorien in der durch localStorage.category_order definierten Reihenfolge
+        function getCategoriesConfig() { 
+            const order = JSON.parse(localStorage.getItem('category_order')) || [];
+            let data = JSON.parse(localStorage.getItem('tracker_categories'));
+            if(!data) {
+                data = defaultCategories;
+                localStorage.setItem('tracker_categories', JSON.stringify(defaultCategories));
+            }
+            const allKeys = [...new Set([...order, ...Object.keys(data)])];
+            return allKeys.reduce((acc, k) => { if(data[k]) acc[k] = data[k]; return acc; }, {});
+        }
+        
+        function getEntries(catId) { 
+            let entries = JSON.parse(localStorage.getItem(`entries_${catId}`)) || []; 
+            entries.forEach(e => { 
+                if(!e.id) e.id = Date.now().toString(36) + Math.random().toString(36).substr(2, 5); 
+                if(e.done === undefined) e.done = false; 
+            }); 
+            return entries; 
+        }
 
         // --- 2. DARK/LIGHT MODE ---
         function initTheme() {
@@ -209,11 +239,11 @@
             const config = getCategoriesConfig();
             const categories = config || {};
             
-            let html = `<button class="px-4 py-1.5 text-sm font-medium rounded-lg ${currentCategory === 'dashboard' ? 'bg-gray-200 dark:bg-zinc-800' : 'text-gray-500 dark:text-zinc-400'}" onclick="switchTab('dashboard')">Übersicht</button>`;
+            let html = `<button class="px-4 py-1.5 text-sm font-medium rounded-lg ${currentCategory === 'dashboard' ? 'bg-gray-200 dark:bg-zinc-800' : 'text-gray-500 dark:text-zinc-400'} cursor-pointer" onclick="switchTab('dashboard')">Übersicht</button>`;
             
             Object.keys(categories).forEach(key => {
                 const label = categories[key].label || key;
-                html += `<button class="px-4 py-1.5 text-sm font-medium rounded-lg ${currentCategory === key ? 'bg-gray-200 dark:bg-zinc-800' : 'text-gray-500 dark:text-zinc-400'}" onclick="switchTab('${key}')">${label}</button>`;
+                html += `<button class="px-4 py-1.5 text-sm font-medium rounded-lg ${currentCategory === key ? 'bg-gray-200 dark:bg-zinc-800' : 'text-gray-500 dark:text-zinc-400'} cursor-pointer" onclick="switchTab('${key}')">${label}</button>`;
             });
             
             html += `<button class="px-3 py-1 text-sm font-bold rounded-lg border border-dashed border-emerald-600/50 text-emerald-500 hover:bg-emerald-500/10 transition-all cursor-pointer" onclick="promptCreateCategoryGlobal()">+ Neu</button>`;
@@ -352,6 +382,7 @@
             }
         }
 
+        // NEU: Haken-Logik
         function toggleDone(catId, entryId) {
             let entries = getEntries(catId);
             const entry = entries.find(e => e.id === entryId);
@@ -434,7 +465,7 @@
                         </div>
                         <div class="flex items-center gap-2">
                             <div class="text-xs px-2.5 py-1 rounded-md font-medium ${status.class} mr-2">${status.text}</div>
-                            <button onclick="toggleDone('${catId}', '${e.id}')" class="cursor-pointer text-gray-400 hover:text-emerald-500 dark:text-zinc-500 dark:hover:text-emerald-400 text-lg p-2" title="${isDone ? 'Wiederherstellen' : 'Erledigt markieren'}">${isDone ? '↩️' : '✅'}</button>
+                            <button onclick="toggleDone('${catId}', '${e.id}')" class="cursor-pointer text-lg p-2 transition-transform hover:scale-110" title="${isDone ? 'Wiederherstellen' : 'Als erledigt markieren'}">${isDone ? '✅' : '⬜'}</button>
                             <button onclick="editEntry('${catId}', '${e.id}')" class="cursor-pointer text-gray-400 hover:text-blue-500 dark:text-zinc-500 dark:hover:text-blue-400 text-lg p-2" title="Bearbeiten">✏️</button>
                             <button onclick="deleteEntry('${catId}', '${e.id}')" class="cursor-pointer text-gray-400 hover:text-rose-500 dark:text-zinc-500 dark:hover:text-rose-400 text-lg p-2" title="Löschen">🗑️</button>
                         </div>
@@ -541,7 +572,7 @@
                 const oneOffs = [];
                 
                 entries.forEach(e => { 
-                    if(e.done) return; // Erledigte Termine überspringen
+                    if(e.done) return; // Erledigte Termine werden im Dashboard ausgeblendet
 
                     const types = config[catId].types || {};
                     const interval = types[e.type] !== undefined ? getInterval(types[e.type]) : undefined;
@@ -606,8 +637,46 @@
 
         function toggleIntervalInput() { document.getElementById('interval-days-container').classList.toggle('hidden', document.getElementById('new-opt-mode').value === 'log'); }
 
+        // NEU: Alles Löschen
+        function nukeAllData() {
+            if(prompt("ACHTUNG: Dies löscht ALLE Daten unwiderruflich. Tippe 'LÖSCHEN' zur Bestätigung:") === 'LÖSCHEN') {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        // NEU: Kategorien Sortieren
+        function moveCategory(id, direction) {
+            let order = Object.keys(getCategoriesConfig());
+            const idx = order.indexOf(id);
+            if(direction === 'up' && idx > 0) {
+                [order[idx-1], order[idx]] = [order[idx], order[idx-1]];
+            }
+            if(direction === 'down' && idx < order.length - 1) {
+                [order[idx], order[idx+1]] = [order[idx+1], order[idx]];
+            }
+            localStorage.setItem('category_order', JSON.stringify(order));
+            renderSettingsPanel(); 
+            renderNavigation();
+        }
+
         function renderSettingsPanel() {
             const config = getCategoriesConfig();
+            
+            // Render Sortier-Liste
+            const sortList = document.getElementById('sort-category-list');
+            if(sortList) {
+                sortList.innerHTML = Object.keys(config).map(id => `
+                    <div class="flex items-center justify-between bg-gray-50 dark:bg-zinc-950 p-3 rounded-lg border border-gray-200 dark:border-zinc-800">
+                        <span class="font-medium text-sm">${config[id].label}</span>
+                        <div class="flex gap-2">
+                            <button onclick="moveCategory('${id}', 'up')" class="p-1 text-gray-500 hover:text-emerald-500 cursor-pointer">▲</button>
+                            <button onclick="moveCategory('${id}', 'down')" class="p-1 text-gray-500 hover:text-emerald-500 cursor-pointer">▼</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
             document.getElementById('add-opt-cat-select').innerHTML = Object.keys(config).map(k => `<option value="${k}">${config[k].label}</option>`).join('');
             document.getElementById('delete-management-list').innerHTML = Object.keys(config).map(k => `<button onclick="deleteCategory('${k}')" class="bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-xs px-3 py-1.5 rounded-lg cursor-pointer">${config[k].label} löschen</button>`).join('');
         }
@@ -654,6 +723,7 @@
             }
         }
 
+        // Export/Import Logik
         function exportFullBackup() {
             const backup = { config: getCategoriesConfig(), data: {} };
             Object.keys(backup.config).forEach(k => { backup.data[k] = getEntries(k); });
@@ -682,13 +752,6 @@
             };
             reader.readAsText(file);
         }
-
-        function nukeAllData() {
-             if(prompt("ACHTUNG: Dies löscht ALLE Daten unwiderruflich. Tippe 'LÖSCHEN' zur Bestätigung:") === 'LÖSCHEN') {
-                localStorage.clear();
-                location.reload();
-         }
-}
 
         // Init
         initTheme();
