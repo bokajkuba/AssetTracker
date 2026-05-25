@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Termin & Kosten Tracker v4.2</title>
+    <title>Termin & Kosten Tracker v4.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -14,17 +14,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
-        input[type="date"], select { color-scheme: light dark; }
-        /* Versteckt den Scrollbalken in der Navigation, behält aber die Funktion */
+        input[type="date"], input[type="time"], select { color-scheme: light dark; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        /* Erzwingt, dass die Buttons immer klickbar sind */
-        button { pointer-events: auto !important; position: relative; z-index: 10; }
+        button { pointer-events: auto !important; }
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-zinc-950 text-gray-900 dark:text-zinc-100 min-h-screen transition-colors duration-200">
 
-<nav class="border-b border-gray-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/50 sticky top-0 backdrop-blur-md z-50">
+    <nav class="border-b border-gray-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/50 sticky top-0 backdrop-blur-md z-50">
         <div class="max-w-5xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-4">
             
             <div class="flex items-center space-x-3 cursor-pointer shrink-0" onclick="switchTab('dashboard')">
@@ -61,12 +59,19 @@
                     <div class="text-3xl font-bold mt-2 text-amber-500" id="count-yellow">0</div>
                 </div>
                 <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm">
-                    <div class="text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider">Abgeschlossen / OK</div>
+                    <div class="text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider">Geplant / OK</div>
                     <div class="text-3xl font-bold mt-2 text-emerald-500" id="count-green">0</div>
                 </div>
             </div>
             <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm">
-                <div class="px-6 py-4 border-b border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-900/50 font-semibold">Fristen-Matrix</div>
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-900/50 flex flex-col sm:flex-row justify-between gap-4">
+                    <h2 class="font-semibold self-center sm:self-start">Fristen-Matrix</h2>
+                    <select id="sort-dashboard" onchange="renderDashboard()" class="w-full sm:w-auto bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-emerald-500">
+                        <option value="urgent">Dringendste zuerst</option>
+                        <option value="date-desc">Neueste (Datum) zuerst</option>
+                        <option value="date-asc">Älteste (Datum) zuerst</option>
+                    </select>
+                </div>
                 <div class="divide-y divide-gray-100 dark:divide-zinc-800" id="dashboard-deadline-list"></div>
             </div>
         </div>
@@ -84,12 +89,18 @@
                             <label class="block text-xs font-medium text-gray-500 dark:text-zinc-400 mb-1.5">Intervall / Termin</label>
                             <select id="generic-type" onchange="handleTypeChange(this)" class="w-full bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500"></select>
                         </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-500 dark:text-zinc-400 mb-1.5">Datum</label>
-                            <input type="date" id="generic-datum" onclick="this.showPicker()" class="w-full bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 cursor-pointer">
+                        <div class="flex gap-4">
+                            <div class="flex-1">
+                                <label class="block text-xs font-medium text-gray-500 dark:text-zinc-400 mb-1.5">Datum</label>
+                                <input type="date" id="generic-datum" onclick="this.showPicker && this.showPicker()" class="w-full bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 cursor-pointer">
+                            </div>
+                            <div class="w-1/3">
+                                <label class="block text-xs font-medium text-gray-500 dark:text-zinc-400 mb-1.5">Uhrzeit</label>
+                                <input type="time" id="generic-zeit" onclick="this.showPicker && this.showPicker()" class="w-full bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 cursor-pointer">
+                            </div>
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-gray-500 dark:text-zinc-400 mb-1.5">Kosten (optional)</label>
+                            <label class="block text-xs font-medium text-gray-500 dark:text-zinc-400 mb-1.5">Kosten in € (optional)</label>
                             <input type="number" id="generic-cost" step="0.01" placeholder="0.00" class="w-full bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
                         </div>
                         <button onclick="saveGenericEntry()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium py-2 rounded-lg transition-colors cursor-pointer">Speichern</button>
@@ -172,7 +183,7 @@
         function formatInterval(days) { return days === 0 ? 'Einmalig' : (days >= 365 ? `${Math.round(days/365)} Jahr(e)` : (days >= 30 ? `${Math.round(days/30.5)} Monat(e)` : `${days} Tage`)); }
         
         function getCategoriesConfig() { if(!localStorage.getItem('tracker_categories')) localStorage.setItem('tracker_categories', JSON.stringify(defaultCategories)); return JSON.parse(localStorage.getItem('tracker_categories')); }
-        function getEntries(catId) { let entries = JSON.parse(localStorage.getItem(`entries_${catId}`)) || []; entries.forEach(e => { if(!e.id) e.id = Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }); return entries; }
+        function getEntries(catId) { let entries = JSON.parse(localStorage.getItem(`entries_${catId}`)) || []; entries.forEach(e => { if(!e.id) e.id = Date.now().toString(36) + Math.random().toString(36).substr(2, 5); if(e.done === undefined) e.done = false; }); return entries; }
 
         // --- 2. DARK/LIGHT MODE ---
         function initTheme() {
@@ -193,28 +204,22 @@
         }
 
         // --- 3. NAVIGATION & UI ---
-function renderNavigation() {
-    const navContainer = document.getElementById('navigation-tabs');
-    // Wir erzwingen hier nochmal den Aufruf von getCategoriesConfig()
-    const config = getCategoriesConfig(); 
-    
-    // Sicherstellen, dass config existiert, sonst leeres Objekt
-    const categories = config || {};
-    
-    // 1. Übersicht-Button
-    let html = `<button class="px-4 py-1.5 text-sm font-medium rounded-lg ${currentCategory === 'dashboard' ? 'bg-gray-200 dark:bg-zinc-800' : 'text-gray-500 dark:text-zinc-400'}" onclick="switchTab('dashboard')">Übersicht</button>`;
-    
-    // 2. Dynamische Kategorien
-    Object.keys(categories).forEach(key => {
-        const label = categories[key].label || key; // Fallback auf Key, falls label fehlt
-        html += `<button class="px-4 py-1.5 text-sm font-medium rounded-lg ${currentCategory === key ? 'bg-gray-200 dark:bg-zinc-800' : 'text-gray-500 dark:text-zinc-400'}" onclick="switchTab('${key}')">${label}</button>`;
-    });
-    
-    // 3. Neu-Button
-    html += `<button class="px-3 py-1 text-sm font-bold rounded-lg border border-dashed border-emerald-600/50 text-emerald-500 hover:bg-emerald-500/10 transition-all cursor-pointer" onclick="promptCreateCategoryGlobal()">+ Neu</button>`;
-    
-    navContainer.innerHTML = html;
-}
+        function renderNavigation() {
+            const navContainer = document.getElementById('navigation-tabs');
+            const config = getCategoriesConfig();
+            const categories = config || {};
+            
+            let html = `<button class="px-4 py-1.5 text-sm font-medium rounded-lg ${currentCategory === 'dashboard' ? 'bg-gray-200 dark:bg-zinc-800' : 'text-gray-500 dark:text-zinc-400'}" onclick="switchTab('dashboard')">Übersicht</button>`;
+            
+            Object.keys(categories).forEach(key => {
+                const label = categories[key].label || key;
+                html += `<button class="px-4 py-1.5 text-sm font-medium rounded-lg ${currentCategory === key ? 'bg-gray-200 dark:bg-zinc-800' : 'text-gray-500 dark:text-zinc-400'}" onclick="switchTab('${key}')">${label}</button>`;
+            });
+            
+            html += `<button class="px-3 py-1 text-sm font-bold rounded-lg border border-dashed border-emerald-600/50 text-emerald-500 hover:bg-emerald-500/10 transition-all cursor-pointer" onclick="promptCreateCategoryGlobal()">+ Neu</button>`;
+            
+            navContainer.innerHTML = html;
+        }
         
         function promptCreateCategoryGlobal() { const label = prompt("Name der neuen Kategorie:"); if (label && label.trim()) { const targetId = saveNewCategoryLogic(label.trim()); if (targetId) switchTab(targetId); } }
         
@@ -292,36 +297,46 @@ function renderNavigation() {
             const name = document.getElementById('generic-name').value.trim();
             const type = document.getElementById('generic-type').value;
             const date = document.getElementById('generic-datum').value;
+            const zeit = document.getElementById('generic-zeit').value;
             const cost = document.getElementById('generic-cost').value.trim();
             
             if(!name || !type || type === '__NEW__' || !date) return alert("Pflichtfelder ausfüllen!");
             
             const entries = getEntries(currentCategory);
-            entries.push({ id: Date.now().toString(36), name, type, date, cost: cost || null });
+            entries.push({ id: Date.now().toString(36), name, type, date, zeit: zeit || null, cost: cost || null, done: false });
             entries.sort((a,b) => new Date(b.date) - new Date(a.date));
             localStorage.setItem(`entries_${currentCategory}`, JSON.stringify(entries));
             
-            document.getElementById('generic-name').value = ""; document.getElementById('generic-cost').value = "";
+            document.getElementById('generic-name').value = ""; 
+            document.getElementById('generic-zeit').value = "";
+            document.getElementById('generic-cost').value = "";
             renderGenericCategoryPage(currentCategory);
         }
+
         function editEntry(catId, entryId) {
             const entries = getEntries(catId);
             const entry = entries.find(e => e.id === entryId);
             if (!entry) return;
             
-            // Neue Abfrage für den Namen (Beschreibung)
-            const newName = prompt("Neue Beschreibung:", entry.name);
-            if (newName === null) return; // Abbrechen
+            const newName = prompt("Neue Bezeichnung (Eintrag):", entry.name);
+            if (newName === null) return;
+            
+            const newType = prompt("Termin-Name (z.B. TÜV):", entry.type);
+            if (newType === null) return;
             
             const newDate = prompt("Neues Datum (YYYY-MM-DD):", entry.date);
             if (newDate === null) return;
             
+            const newZeit = prompt("Neue Uhrzeit (HH:MM, oder leer lassen):", entry.zeit || "");
+            if (newZeit === null) return;
+            
             const newCost = prompt("Neue Kosten (in €):", entry.cost || "");
             if (newCost === null) return;
             
-            // Werte zuweisen
             entry.name = newName.trim();
+            entry.type = newType.trim();
             entry.date = newDate;
+            entry.zeit = newZeit.trim() === "" ? null : newZeit.trim();
             entry.cost = newCost.trim() === "" ? null : newCost.trim();
             
             entries.sort((a,b) => new Date(b.date) - new Date(a.date));
@@ -337,13 +352,31 @@ function renderNavigation() {
             }
         }
 
+        function toggleDone(catId, entryId) {
+            let entries = getEntries(catId);
+            const entry = entries.find(e => e.id === entryId);
+            if(entry) {
+                entry.done = !entry.done;
+                localStorage.setItem(`entries_${catId}`, JSON.stringify(entries));
+                renderGenericHistoryList(catId);
+            }
+        }
+
         function getStatusInfo(targetDateStr, intervalDays) {
             let nextDate = (intervalDays === 0 || intervalDays === undefined) ? new Date(targetDateStr) : new Date(new Date(targetDateStr).getTime() + (intervalDays * 86400000));
             const diffDays = Math.ceil((nextDate.setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / 86400000);
-            if (diffDays < 0) return { text: `Fällig seit ${nextDate.toLocaleDateString('de-DE')}`, status: 'red', class: "text-rose-600 bg-rose-100 dark:text-rose-400 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20" };
-            if (diffDays === 0) return { text: `Heute fällig!`, status: 'red', class: "text-rose-600 bg-rose-100 dark:text-rose-400 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20" };
-            if (diffDays <= 14) return { text: `Fällig am ${nextDate.toLocaleDateString('de-DE')} (In ${diffDays} T.)`, status: 'yellow', class: "text-amber-600 bg-amber-100 dark:text-amber-400 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20" };
-            return { text: `Geplant für ${nextDate.toLocaleDateString('de-DE')}`, status: 'green', class: "text-emerald-600 bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20" };
+            
+            if (intervalDays === 0) {
+                if (diffDays < 0) return { diffDays, text: `Abgeschlossen`, status: 'gray', class: "text-gray-600 bg-gray-100 dark:text-gray-400 dark:bg-gray-500/10 border border-gray-200 dark:border-gray-500/20" };
+                if (diffDays === 0) return { diffDays, text: `Heute!`, status: 'yellow', class: "text-amber-600 bg-amber-100 dark:text-amber-400 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20" };
+                if (diffDays <= 14) return { diffDays, text: `Geplant am ${nextDate.toLocaleDateString('de-DE')} (In ${diffDays} T.)`, status: 'yellow', class: "text-amber-600 bg-amber-100 dark:text-amber-400 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20" };
+                return { diffDays, text: `Geplant für ${nextDate.toLocaleDateString('de-DE')}`, status: 'green', class: "text-emerald-600 bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20" };
+            }
+
+            if (diffDays < 0) return { diffDays, text: `Fällig seit ${nextDate.toLocaleDateString('de-DE')}`, status: 'red', class: "text-rose-600 bg-rose-100 dark:text-rose-400 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20" };
+            if (diffDays === 0) return { diffDays, text: `Heute fällig!`, status: 'red', class: "text-rose-600 bg-rose-100 dark:text-rose-400 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20" };
+            if (diffDays <= 14) return { diffDays, text: `Fällig am ${nextDate.toLocaleDateString('de-DE')} (In ${diffDays} T.)`, status: 'yellow', class: "text-amber-600 bg-amber-100 dark:text-amber-400 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20" };
+            return { diffDays, text: `Geplant für ${nextDate.toLocaleDateString('de-DE')}`, status: 'green', class: "text-emerald-600 bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20" };
         }
 
         // --- 5. HISTORIE & AUSWERTUNG ---
@@ -374,25 +407,36 @@ function renderNavigation() {
             const latestMap = {};
             getEntries(catId).forEach(e => { const key = `${e.name}-${e.type}`; if(!latestMap[key]) latestMap[key] = e.date; });
 
-                let html = entries.map(e => {
+            let html = entries.map(e => {
                 const isLatest = latestMap[`${e.name}-${e.type}`] === e.date;
                 const interval = config.types ? getInterval(config.types[e.type]) : undefined;
-                const status = isLatest ? getStatusInfo(e.date, interval) : { text: "Historie", class: "text-gray-500 dark:text-zinc-500 bg-gray-100 dark:bg-zinc-950/40 border border-gray-200 dark:border-zinc-800" };
-                const costDisplay = e.cost ? `<span class="text-xs text-amber-600 dark:text-amber-500 font-medium ml-3">| ${e.cost} €</span>` : '';
+                const isDone = e.done === true;
                 
-                // Wir nutzen hier ein geschlossenes String-Template, das durch die einfachen Anführungszeichen 
-                // innerhalb der Funktion nicht mehr durch `catId` oder `e.id` gestört wird
+                let status;
+                if (isDone) {
+                    status = { text: "Erledigt", class: "text-gray-500 dark:text-zinc-500 bg-gray-200 dark:bg-zinc-800 border border-gray-300 dark:border-zinc-700" };
+                } else if (interval === 0) {
+                    status = getStatusInfo(e.date, interval);
+                } else {
+                    status = isLatest ? getStatusInfo(e.date, interval) : { text: "Historie", class: "text-gray-500 dark:text-zinc-500 bg-gray-100 dark:bg-zinc-950/40 border border-gray-200 dark:border-zinc-800" };
+                }
+                
+                const costDisplay = e.cost ? `<span class="text-xs text-amber-600 dark:text-amber-500 font-medium ml-3">| ${e.cost} €</span>` : '';
+                const zeitDisplay = e.zeit ? ` um ${e.zeit} Uhr` : '';
+                const textStyle = isDone ? "line-through opacity-50" : "";
+                
                 return `
-                    <div class="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div>
+                    <div class="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${isDone ? 'bg-gray-50 dark:bg-zinc-900/30' : ''}">
+                        <div class="${textStyle} transition-all">
                             <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-500 block uppercase">${e.name}</span>
                             <span class="text-sm font-medium text-gray-800 dark:text-zinc-200">${e.type} ${costDisplay}</span>
-                            <span class="text-xs text-gray-500 dark:text-zinc-500 ml-2">am ${new Date(e.date).toLocaleDateString('de-DE')}</span>
+                            <span class="text-xs text-gray-500 dark:text-zinc-500 ml-2">am ${new Date(e.date).toLocaleDateString('de-DE')}${zeitDisplay}</span>
                         </div>
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-2">
                             <div class="text-xs px-2.5 py-1 rounded-md font-medium ${status.class} mr-2">${status.text}</div>
-                            <button onclick="editEntry('${catId}', '${e.id}')" class="cursor-pointer text-gray-400 hover:text-emerald-500 dark:text-zinc-500 dark:hover:text-emerald-400 text-lg" title="Bearbeiten">✏️</button>
-                            <button onclick="deleteEntry('${catId}', '${e.id}')" class="cursor-pointer text-gray-400 hover:text-rose-500 dark:text-zinc-500 dark:hover:text-rose-400 text-lg" title="Löschen">🗑️</button>
+                            <button onclick="toggleDone('${catId}', '${e.id}')" class="cursor-pointer text-gray-400 hover:text-emerald-500 dark:text-zinc-500 dark:hover:text-emerald-400 text-lg p-2" title="${isDone ? 'Wiederherstellen' : 'Erledigt markieren'}">${isDone ? '↩️' : '✅'}</button>
+                            <button onclick="editEntry('${catId}', '${e.id}')" class="cursor-pointer text-gray-400 hover:text-blue-500 dark:text-zinc-500 dark:hover:text-blue-400 text-lg p-2" title="Bearbeiten">✏️</button>
+                            <button onclick="deleteEntry('${catId}', '${e.id}')" class="cursor-pointer text-gray-400 hover:text-rose-500 dark:text-zinc-500 dark:hover:text-rose-400 text-lg p-2" title="Löschen">🗑️</button>
                         </div>
                     </div>`;
             }).join('');
@@ -424,7 +468,6 @@ function renderNavigation() {
                         </div>
                     </div>`;
 
-            // Diagramm nur hinzufügen, wenn Gesamtkosten > 0 sind
             if (totalCost > 0) {
                 html += `
                     <div>
@@ -433,11 +476,9 @@ function renderNavigation() {
                     </div>`;
             }
             
-            html += `</div>`; // Schließt den Haupt-Container der Analyse
-
+            html += `</div>`;
             container.innerHTML = html;
             
-            // Chart nur rendern, wenn Kosten vorhanden sind (sonst altes Chart löschen)
             if (totalCost > 0) {
                 renderChart(entries); 
             } else if (chartInstance) {
@@ -489,38 +530,77 @@ function renderNavigation() {
         // --- 6. DASHBOARD & EINSTELLUNGEN ---
         function renderDashboard() {
             const container = document.getElementById('dashboard-deadline-list');
+            const sortMode = document.getElementById('sort-dashboard') ? document.getElementById('sort-dashboard').value : 'urgent';
             const config = getCategoriesConfig();
-            let matrixHtml = ""; let cRed = 0, cYellow = 0, cGreen = 0;
+            let cRed = 0, cYellow = 0, cGreen = 0;
+            let allDeadlines = [];
             
             Object.keys(config).forEach(catId => {
                 const entries = getEntries(catId);
                 const uniqueAssets = {};
-                entries.forEach(e => { const key = `${e.name}-${e.type}`; if(!uniqueAssets[key]) uniqueAssets[key] = e; });
+                const oneOffs = [];
+                
+                entries.forEach(e => { 
+                    if(e.done) return; // Erledigte Termine überspringen
 
-                Object.values(uniqueAssets).forEach(e => {
                     const types = config[catId].types || {};
                     const interval = types[e.type] !== undefined ? getInterval(types[e.type]) : undefined;
                     
-                    if (interval !== undefined) {
-                        const status = getStatusInfo(e.date, interval);
-                        if(status.status === 'red') cRed++; if(status.status === 'yellow') cYellow++; if(status.status === 'green') cGreen++;
-                        
-                        matrixHtml += `
-                            <div class="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-gray-100 dark:hover:bg-zinc-900/30 transition-colors">
-                                <div class="flex items-center space-x-4">
-                                    <div class="w-2 h-2 rounded-full ${status.status === 'red' ? 'bg-rose-500' : status.status === 'yellow' ? 'bg-amber-500' : 'bg-emerald-500'}"></div>
-                                    <div>
-                                        <span class="text-sm font-semibold text-gray-900 dark:text-zinc-100">${e.name} <span class="text-xs text-gray-500 dark:text-zinc-500 font-normal">(${config[catId].label})</span></span>
-                                        <span class="text-xs text-gray-500 dark:text-zinc-400 block">${e.type} (Intervall: ${formatInterval(interval)})</span>
-                                    </div>
-                                </div>
-                                <div class="text-xs px-3 py-1 rounded-lg font-medium ${status.class}">${status.text}</div>
-                            </div>`;
+                    if (interval === 0) {
+                        oneOffs.push({ entry: e, catId, interval });
+                    } else if (interval !== undefined) {
+                        const key = `${e.name}-${e.type}`; 
+                        if(!uniqueAssets[key]) uniqueAssets[key] = { entry: e, catId, interval };
                     }
                 });
+
+                Object.values(uniqueAssets).forEach(item => allDeadlines.push(item));
+                oneOffs.forEach(item => allDeadlines.push(item));
             });
             
-            document.getElementById('count-red').innerText = cRed; document.getElementById('count-yellow').innerText = cYellow; document.getElementById('count-green').innerText = cGreen;
+            let renderList = [];
+            
+            allDeadlines.forEach(item => {
+                const e = item.entry;
+                const status = getStatusInfo(e.date, item.interval);
+                
+                // Abgeschlossene Einmal-Termine vom Dashboard fernhalten
+                if (item.interval === 0 && status.status === 'gray') return;
+
+                if(status.status === 'red') cRed++; 
+                if(status.status === 'yellow') cYellow++; 
+                if(status.status === 'green') cGreen++;
+                
+                renderList.push({ ...item, status, targetDate: new Date(e.date) });
+            });
+            
+            renderList.sort((a, b) => {
+                if (sortMode === 'urgent') return a.status.diffDays - b.status.diffDays;
+                if (sortMode === 'date-desc') return b.targetDate - a.targetDate;
+                if (sortMode === 'date-asc') return a.targetDate - b.targetDate;
+            });
+
+            let matrixHtml = "";
+            renderList.forEach(item => {
+                const e = item.entry;
+                const config = getCategoriesConfig();
+                
+                matrixHtml += `
+                    <div class="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-gray-100 dark:hover:bg-zinc-900/30 transition-colors">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-2 h-2 rounded-full ${item.status.status === 'red' ? 'bg-rose-500' : item.status.status === 'yellow' ? 'bg-amber-500' : (item.status.status === 'gray' ? 'bg-gray-400' : 'bg-emerald-500')}"></div>
+                            <div>
+                                <span class="text-sm font-semibold text-gray-900 dark:text-zinc-100">${e.name} <span class="text-xs text-gray-500 dark:text-zinc-500 font-normal">(${config[item.catId].label})</span></span>
+                                <span class="text-xs text-gray-500 dark:text-zinc-400 block">${e.type} (Intervall: ${formatInterval(item.interval)})</span>
+                            </div>
+                        </div>
+                        <div class="text-xs px-3 py-1 rounded-lg font-medium ${item.status.class}">${item.status.text}</div>
+                    </div>`;
+            });
+            
+            document.getElementById('count-red').innerText = cRed; 
+            document.getElementById('count-yellow').innerText = cYellow; 
+            document.getElementById('count-green').innerText = cGreen;
             container.innerHTML = matrixHtml || `<div class="p-6 text-sm text-gray-500 text-center">Keine Überwachungsfristen vorhanden.</div>`;
         }
 
@@ -577,9 +657,14 @@ function renderNavigation() {
         function exportFullBackup() {
             const backup = { config: getCategoriesConfig(), data: {} };
             Object.keys(backup.config).forEach(k => { backup.data[k] = getEntries(k); });
-            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-            a.download = `tracker_export_${new Date().toISOString().split('T')[0]}.json`; a.click();
+            const jsonString = JSON.stringify(backup, null, 2);
+            
+            navigator.clipboard.writeText(jsonString).then(() => {
+                alert("Daten wurden in die Zwischenablage kopiert! Einfach in eine Notiz-App einfügen.");
+            }).catch(() => {
+                const win = window.open("", "Export", "width=400,height=400");
+                win.document.write("<pre>" + jsonString + "</pre>");
+            });
         }
 
         function importFullBackup() {
@@ -597,6 +682,13 @@ function renderNavigation() {
             };
             reader.readAsText(file);
         }
+
+        function nukeAllData() {
+             if(prompt("ACHTUNG: Dies löscht ALLE Daten unwiderruflich. Tippe 'LÖSCHEN' zur Bestätigung:") === 'LÖSCHEN') {
+                localStorage.clear();
+                location.reload();
+         }
+}
 
         // Init
         initTheme();
