@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Termin & Kosten Tracker v4.6</title>
+    <title>Termin & Kosten Tracker v4.7</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -127,7 +127,7 @@
             <h1 class="text-2xl font-bold tracking-tight mb-6">Einstellungen</h1>
             
             <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-6 shadow-sm">
-                <h2 class="text-lg font-semibold mb-4">Kategorien sortieren</h2>
+                <h2 class="text-lg font-semibold mb-4">Kategorien-Reihenfolge verschieben</h2>
                 <div id="sort-category-list" class="space-y-2"></div>
             </div>
 
@@ -154,7 +154,6 @@
                                 <div id="interval-days-container" class="flex-1"><input type="number" id="new-opt-interval" placeholder="Tage (z.B. 182)" class="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-md px-3 py-1.5 text-xs"></div>
                             </div>
                             <input type="number" id="new-opt-est-cost" step="0.01" placeholder="Geschätzte Kosten in € (optional)" class="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-md px-3 py-1.5 text-xs">
-                            
                             <button onclick="addOptionToCategory()" class="w-full bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 dark:hover:bg-zinc-700 text-xs py-2 rounded font-medium cursor-pointer transition-colors">Termin hinzufügen</button>
                         </div>
                     </div>
@@ -168,7 +167,7 @@
             <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-6 shadow-sm">
                 <h2 class="text-lg font-semibold mb-2">Export & Import</h2>
                 <div class="flex flex-col sm:flex-row gap-4">
-                    <button onclick="exportFullBackup()" class="flex-1 bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 dark:hover:bg-zinc-700 text-sm font-medium py-2.5 rounded-lg cursor-pointer transition-colors">Daten exportieren / Kopieren</button>
+                    <button onclick="exportFullBackup()" class="flex-1 bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 dark:hover:bg-zinc-700 text-sm font-medium py-2.5 rounded-lg cursor-pointer transition-colors">Daten exportieren (JSON)</button>
                     <label class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium py-2.5 rounded-lg cursor-pointer text-center relative block transition-colors">
                         <span>Daten importieren</span>
                         <input type="file" id="import-backup-file" onchange="importFullBackup()" class="hidden">
@@ -178,8 +177,8 @@
 
             <div class="bg-white dark:bg-zinc-900 border border-rose-900/50 rounded-xl p-6 shadow-sm">
                 <h2 class="text-lg font-semibold text-rose-500 mb-2">Gefahrenzone</h2>
-                <p class="text-sm text-gray-500 dark:text-zinc-400 mb-4">Hier kannst du den Tracker in seinen Ursprungszustand zurückversetzen. Alle Daten gehen verloren.</p>
-                <button onclick="nukeAllData()" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg font-bold transition-colors cursor-pointer">ALLES LÖSCHEN & ZURÜCKSETZEN</button>
+                <p class="text-sm text-gray-500 dark:text-zinc-400 mb-4">Hier kannst du den Tracker in seinen Ursprungszustand zurückversetzen. Alle Einträge und Strukturen verschwinden.</p>
+                <button onclick="nukeAllData()" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg font-bold transition-all cursor-pointer">ALLES LÖSCHEN & ZURÜCKSETZEN</button>
             </div>
         </div>
     </main>
@@ -194,7 +193,7 @@
         function getEstCost(typeData) { return typeof typeData === 'object' ? typeData.estCost : null; }
         function formatInterval(days) { return days === 0 ? 'Einmalig' : (days >= 365 ? `${Math.round(days/365)} Jahr(e)` : (days >= 30 ? `${Math.round(days/30.5)} Monat(e)` : `${days} Tage`)); }
         
-        // NEU: Lädt die Kategorien in der durch localStorage.category_order definierten Reihenfolge
+        // Modifiziert für benutzerdefinierte Reihenfolge
         function getCategoriesConfig() { 
             const order = JSON.parse(localStorage.getItem('category_order')) || [];
             let data = JSON.parse(localStorage.getItem('tracker_categories'));
@@ -205,14 +204,14 @@
             const allKeys = [...new Set([...order, ...Object.keys(data)])];
             return allKeys.reduce((acc, k) => { if(data[k]) acc[k] = data[k]; return acc; }, {});
         }
-        
+
         function getEntries(catId) { 
-            let entries = JSON.parse(localStorage.getItem(`entries_${catId}`)) || []; 
+            let entries = JSON.parse(localStorage.getItem(`entries_${catId}`)) || [];
             entries.forEach(e => { 
                 if(!e.id) e.id = Date.now().toString(36) + Math.random().toString(36).substr(2, 5); 
                 if(e.done === undefined) e.done = false; 
             }); 
-            return entries; 
+            return entries;
         }
 
         // --- 2. DARK/LIGHT MODE ---
@@ -229,7 +228,7 @@
             localStorage.setItem('theme', isDark ? 'dark' : 'light');
             document.getElementById('theme-icon').innerText = isDark ? '☀️' : '🌙';
             if(chartInstance && currentCategory !== 'dashboard' && currentCategory !== 'settings') {
-                renderGenericHistoryList(currentCategory); 
+                renderGenericHistoryList(currentCategory);
             }
         }
 
@@ -238,20 +237,24 @@
             const navContainer = document.getElementById('navigation-tabs');
             const config = getCategoriesConfig();
             const categories = config || {};
-            
             let html = `<button class="px-4 py-1.5 text-sm font-medium rounded-lg ${currentCategory === 'dashboard' ? 'bg-gray-200 dark:bg-zinc-800' : 'text-gray-500 dark:text-zinc-400'} cursor-pointer" onclick="switchTab('dashboard')">Übersicht</button>`;
             
             Object.keys(categories).forEach(key => {
                 const label = categories[key].label || key;
                 html += `<button class="px-4 py-1.5 text-sm font-medium rounded-lg ${currentCategory === key ? 'bg-gray-200 dark:bg-zinc-800' : 'text-gray-500 dark:text-zinc-400'} cursor-pointer" onclick="switchTab('${key}')">${label}</button>`;
             });
-            
             html += `<button class="px-3 py-1 text-sm font-bold rounded-lg border border-dashed border-emerald-600/50 text-emerald-500 hover:bg-emerald-500/10 transition-all cursor-pointer" onclick="promptCreateCategoryGlobal()">+ Neu</button>`;
             
             navContainer.innerHTML = html;
         }
         
-        function promptCreateCategoryGlobal() { const label = prompt("Name der neuen Kategorie:"); if (label && label.trim()) { const targetId = saveNewCategoryLogic(label.trim()); if (targetId) switchTab(targetId); } }
+        function promptCreateCategoryGlobal() { 
+            const label = prompt("Name der neuen Kategorie:");
+            if (label && label.trim()) { 
+                const targetId = saveNewCategoryLogic(label.trim()); 
+                if (targetId) switchTab(targetId);
+            } 
+        }
         
         function switchTab(tabId) {
             currentCategory = tabId;
@@ -261,9 +264,16 @@
             const searchInput = document.getElementById('search-history');
             if(searchInput) searchInput.value = '';
 
-            if (tabId === 'dashboard') { document.getElementById('dashboard').classList.replace('hidden', 'block'); renderDashboard(); }
-            else if (tabId === 'settings') { document.getElementById('settings').classList.replace('hidden', 'block'); renderSettingsPanel(); }
-            else { document.getElementById('dynamic-category-view').classList.replace('hidden', 'block'); renderGenericCategoryPage(tabId); }
+            if (tabId === 'dashboard') { 
+                document.getElementById('dashboard').classList.replace('hidden', 'block'); 
+                renderDashboard(); 
+            } else if (tabId === 'settings') { 
+                document.getElementById('settings').classList.replace('hidden', 'block'); 
+                renderSettingsPanel(); 
+            } else { 
+                document.getElementById('dynamic-category-view').classList.replace('hidden', 'block'); 
+                renderGenericCategoryPage(tabId);
+            }
         }
 
         // --- 4. KATEGORIE-ANSICHT (CRUD) ---
@@ -303,7 +313,6 @@
             if (!config[currentCategory].types) config[currentCategory].types = {};
             config[currentCategory].types[termName.trim()] = { interval: days, estCost: estCost };
             localStorage.setItem('tracker_categories', JSON.stringify(config));
-            
             renderGenericCategoryPage(currentCategory);
             document.getElementById('generic-type').value = termName.trim();
             handleTypeChange(document.getElementById('generic-type'));
@@ -312,7 +321,7 @@
         function handleTypeChange(selectElement) {
             if (!selectElement) return;
             if (selectElement.value === '__NEW__') {
-                selectElement.selectedIndex = 0; 
+                selectElement.selectedIndex = 0;
                 triggerNewTerminPopup();
             } else {
                 const config = getCategoriesConfig()[currentCategory];
@@ -331,13 +340,11 @@
             const cost = document.getElementById('generic-cost').value.trim();
             
             if(!name || !type || type === '__NEW__' || !date) return alert("Pflichtfelder ausfüllen!");
-            
             const entries = getEntries(currentCategory);
             entries.push({ id: Date.now().toString(36), name, type, date, zeit: zeit || null, cost: cost || null, done: false });
             entries.sort((a,b) => new Date(b.date) - new Date(a.date));
             localStorage.setItem(`entries_${currentCategory}`, JSON.stringify(entries));
-            
-            document.getElementById('generic-name').value = ""; 
+            document.getElementById('generic-name').value = "";
             document.getElementById('generic-zeit').value = "";
             document.getElementById('generic-cost').value = "";
             renderGenericCategoryPage(currentCategory);
@@ -347,19 +354,14 @@
             const entries = getEntries(catId);
             const entry = entries.find(e => e.id === entryId);
             if (!entry) return;
-            
             const newName = prompt("Neue Bezeichnung (Eintrag):", entry.name);
             if (newName === null) return;
-            
             const newType = prompt("Termin-Name (z.B. TÜV):", entry.type);
             if (newType === null) return;
-            
             const newDate = prompt("Neues Datum (YYYY-MM-DD):", entry.date);
             if (newDate === null) return;
-            
             const newZeit = prompt("Neue Uhrzeit (HH:MM, oder leer lassen):", entry.zeit || "");
             if (newZeit === null) return;
-            
             const newCost = prompt("Neue Kosten (in €):", entry.cost || "");
             if (newCost === null) return;
             
@@ -368,21 +370,19 @@
             entry.date = newDate;
             entry.zeit = newZeit.trim() === "" ? null : newZeit.trim();
             entry.cost = newCost.trim() === "" ? null : newCost.trim();
-            
             entries.sort((a,b) => new Date(b.date) - new Date(a.date));
             localStorage.setItem(`entries_${catId}`, JSON.stringify(entries));
             renderGenericHistoryList(catId);
         }
 
         function deleteEntry(catId, entryId) {
-            if(confirm("Wirklich löschen?")) { 
-                let entries = getEntries(catId).filter(e => e.id !== entryId); 
-                localStorage.setItem(`entries_${catId}`, JSON.stringify(entries)); 
-                renderGenericHistoryList(catId); 
+            if(confirm("Wirklich löschen?")) {
+                let entries = getEntries(catId).filter(e => e.id !== entryId);
+                localStorage.setItem(`entries_${catId}`, JSON.stringify(entries));
+                renderGenericHistoryList(catId);
             }
         }
 
-        // NEU: Haken-Logik
         function toggleDone(catId, entryId) {
             let entries = getEntries(catId);
             const entry = entries.find(e => e.id === entryId);
@@ -465,7 +465,7 @@
                         </div>
                         <div class="flex items-center gap-2">
                             <div class="text-xs px-2.5 py-1 rounded-md font-medium ${status.class} mr-2">${status.text}</div>
-                            <button onclick="toggleDone('${catId}', '${e.id}')" class="cursor-pointer text-lg p-2 transition-transform hover:scale-110" title="${isDone ? 'Wiederherstellen' : 'Als erledigt markieren'}">${isDone ? '✅' : '⬜'}</button>
+                            <button onclick="toggleDone('${catId}', '${e.id}')" class="cursor-pointer text-lg p-2 transition-transform hover:scale-110" title="${isDone ? 'Wieder aktivieren' : 'Erledigt markieren'}">${isDone ? '✅' : '⬜'}</button>
                             <button onclick="editEntry('${catId}', '${e.id}')" class="cursor-pointer text-gray-400 hover:text-blue-500 dark:text-zinc-500 dark:hover:text-blue-400 text-lg p-2" title="Bearbeiten">✏️</button>
                             <button onclick="deleteEntry('${catId}', '${e.id}')" class="cursor-pointer text-gray-400 hover:text-rose-500 dark:text-zinc-500 dark:hover:text-rose-400 text-lg p-2" title="Löschen">🗑️</button>
                         </div>
@@ -506,15 +506,11 @@
                         <div class="w-full max-w-2xl mx-auto"><canvas id="costChart"></canvas></div>
                     </div>`;
             }
-            
             html += `</div>`;
             container.innerHTML = html;
             
-            if (totalCost > 0) {
-                renderChart(entries); 
-            } else if (chartInstance) {
-                chartInstance.destroy();
-            }
+            if (totalCost > 0) { renderChart(entries); } 
+            else if (chartInstance) { chartInstance.destroy(); }
         }
 
         function renderChart(filteredEntries) {
@@ -572,7 +568,7 @@
                 const oneOffs = [];
                 
                 entries.forEach(e => { 
-                    if(e.done) return; // Erledigte Termine werden im Dashboard ausgeblendet
+                    if(e.done) return; // Hier werden fertige Tasks ausgeblendet
 
                     const types = config[catId].types || {};
                     const interval = types[e.type] !== undefined ? getInterval(types[e.type]) : undefined;
@@ -590,12 +586,9 @@
             });
             
             let renderList = [];
-            
             allDeadlines.forEach(item => {
                 const e = item.entry;
                 const status = getStatusInfo(e.date, item.interval);
-                
-                // Abgeschlossene Einmal-Termine vom Dashboard fernhalten
                 if (item.interval === 0 && status.status === 'gray') return;
 
                 if(status.status === 'red') cRed++; 
@@ -615,6 +608,8 @@
             renderList.forEach(item => {
                 const e = item.entry;
                 const config = getCategoriesConfig();
+                // NEU: Uhrzeit in der Fristenmatrix
+                const zeitDisplay = e.zeit ? ` | ${e.zeit} Uhr` : '';
                 
                 matrixHtml += `
                     <div class="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-gray-100 dark:hover:bg-zinc-900/30 transition-colors">
@@ -622,7 +617,7 @@
                             <div class="w-2 h-2 rounded-full ${item.status.status === 'red' ? 'bg-rose-500' : item.status.status === 'yellow' ? 'bg-amber-500' : (item.status.status === 'gray' ? 'bg-gray-400' : 'bg-emerald-500')}"></div>
                             <div>
                                 <span class="text-sm font-semibold text-gray-900 dark:text-zinc-100">${e.name} <span class="text-xs text-gray-500 dark:text-zinc-500 font-normal">(${config[item.catId].label})</span></span>
-                                <span class="text-xs text-gray-500 dark:text-zinc-400 block">${e.type} (Intervall: ${formatInterval(item.interval)})</span>
+                                <span class="text-xs text-gray-500 dark:text-zinc-400 block">${e.type} (Intervall: ${formatInterval(item.interval)})${zeitDisplay}</span>
                             </div>
                         </div>
                         <div class="text-xs px-3 py-1 rounded-lg font-medium ${item.status.class}">${item.status.text}</div>
@@ -637,7 +632,7 @@
 
         function toggleIntervalInput() { document.getElementById('interval-days-container').classList.toggle('hidden', document.getElementById('new-opt-mode').value === 'log'); }
 
-        // NEU: Alles Löschen
+        // Alles Löschen Logik
         function nukeAllData() {
             if(prompt("ACHTUNG: Dies löscht ALLE Daten unwiderruflich. Tippe 'LÖSCHEN' zur Bestätigung:") === 'LÖSCHEN') {
                 localStorage.clear();
@@ -645,7 +640,7 @@
             }
         }
 
-        // NEU: Kategorien Sortieren
+        // Pfeil-Sortierung für Kategorien
         function moveCategory(id, direction) {
             let order = Object.keys(getCategoriesConfig());
             const idx = order.indexOf(id);
@@ -662,16 +657,14 @@
 
         function renderSettingsPanel() {
             const config = getCategoriesConfig();
-            
-            // Render Sortier-Liste
             const sortList = document.getElementById('sort-category-list');
             if(sortList) {
                 sortList.innerHTML = Object.keys(config).map(id => `
                     <div class="flex items-center justify-between bg-gray-50 dark:bg-zinc-950 p-3 rounded-lg border border-gray-200 dark:border-zinc-800">
                         <span class="font-medium text-sm">${config[id].label}</span>
                         <div class="flex gap-2">
-                            <button onclick="moveCategory('${id}', 'up')" class="p-1 text-gray-500 hover:text-emerald-500 cursor-pointer">▲</button>
-                            <button onclick="moveCategory('${id}', 'down')" class="p-1 text-gray-500 hover:text-emerald-500 cursor-pointer">▼</button>
+                            <button onclick="moveCategory('${id}', 'up')" class="p-1 font-bold text-gray-500 hover:text-emerald-500 cursor-pointer">▲</button>
+                            <button onclick="moveCategory('${id}', 'down')" class="p-1 font-bold text-gray-500 hover:text-emerald-500 cursor-pointer">▼</button>
                         </div>
                     </div>
                 `).join('');
@@ -706,7 +699,6 @@
             if(!optName) return alert("Name fehlt.");
             const config = getCategoriesConfig();
             if(!config[catId].types) config[catId].types = {};
-            
             config[catId].types[optName] = { interval: interval, estCost: estCost };
             localStorage.setItem('tracker_categories', JSON.stringify(config));
             
@@ -723,7 +715,6 @@
             }
         }
 
-        // Export/Import Logik
         function exportFullBackup() {
             const backup = { config: getCategoriesConfig(), data: {} };
             Object.keys(backup.config).forEach(k => { backup.data[k] = getEntries(k); });
