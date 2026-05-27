@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Termin & Kosten Tracker v4.7</title>
+    <title>Termin & Kosten Tracker v5.4</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = {
-            darkMode: 'class'
-        }
+        tailwind.config = { darkMode: 'class' }
     </script>
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
         body { font-family: 'Inter', sans-serif; }
         input[type="date"], input[type="time"], select { color-scheme: light dark; }
@@ -34,42 +35,44 @@
             <div id="navigation-tabs" class="flex flex-wrap justify-center gap-1 bg-gray-100 dark:bg-zinc-950 p-1 rounded-xl border border-gray-200 dark:border-zinc-800 items-center"></div>
             
             <div class="flex items-center gap-2 shrink-0">
-                <button onclick="switchTab('settings')" class="p-2 rounded-lg bg-gray-200 dark:bg-zinc-800 text-gray-600 dark:text-zinc-300 hover:bg-gray-300 dark:hover:bg-zinc-700 transition-colors" title="Einstellungen">
-                    ⚙️
-                </button>
+                <button onclick="openGlobalCalendar()" class="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-800 transition-colors" title="Zentraler Kalender">📅</button>
+                <button onclick="forceAppUpdate()" class="p-2 rounded-lg bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 hover:bg-rose-200 dark:hover:bg-rose-800 transition-colors" title="App Neu Laden (Cache leeren)">🔄</button>
+                <button onclick="switchTab('settings')" class="p-2 rounded-lg bg-gray-200 dark:bg-zinc-800 text-gray-600 dark:text-zinc-300 hover:bg-gray-300 dark:hover:bg-zinc-700 transition-colors" title="Einstellungen">⚙️</button>
                 <button onclick="toggleTheme()" class="p-2 rounded-lg bg-gray-200 dark:bg-zinc-800 text-gray-600 dark:text-zinc-300 hover:bg-gray-300 dark:hover:bg-zinc-700 transition-colors" title="Dark/Light Mode">
                     <span id="theme-icon">☀️</span>
                 </button>
             </div>
-
         </div>
     </nav>
 
     <main class="max-w-5xl mx-auto px-4 py-8">
+        
         <div id="dashboard" class="tab-content block">
             <h1 class="text-2xl font-bold tracking-tight mb-2">Dashboard</h1>
-            <p class="text-gray-500 dark:text-zinc-400 text-sm mb-6">Alle kritischen Fristen und anstehenden Intervalle deiner Assets im Blick.</p>
+            <p class="text-gray-500 dark:text-zinc-400 text-sm mb-6">Alle kritischen Fristen und anstehenden Intervalle im Blick.</p>
+            
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm">
-                    <div class="text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider">Status Kritisch</div>
+                    <div class="text-xs font-medium text-gray-500 uppercase tracking-wider">Status Kritisch / Heute</div>
                     <div class="text-3xl font-bold mt-2 text-rose-500" id="count-red">0</div>
                 </div>
                 <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm">
-                    <div class="text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider">Anstehend (14 Tage)</div>
+                    <div class="text-xs font-medium text-gray-500 uppercase tracking-wider">Anstehend / Warnung</div>
                     <div class="text-3xl font-bold mt-2 text-amber-500" id="count-yellow">0</div>
                 </div>
                 <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm">
-                    <div class="text-xs font-medium text-gray-500 dark:text-zinc-500 uppercase tracking-wider">Geplant / OK</div>
+                    <div class="text-xs font-medium text-gray-500 uppercase tracking-wider">Geplant / OK</div>
                     <div class="text-3xl font-bold mt-2 text-emerald-500" id="count-green">0</div>
                 </div>
             </div>
+            
             <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm">
                 <div class="px-6 py-4 border-b border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-900/50 flex flex-col sm:flex-row justify-between gap-4">
                     <h2 class="font-semibold self-center sm:self-start">Fristen-Matrix</h2>
                     <select id="sort-dashboard" onchange="renderDashboard()" class="w-full sm:w-auto bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-emerald-500">
                         <option value="urgent">Dringendste zuerst</option>
-                        <option value="date-desc">Neueste (Datum) zuerst</option>
                         <option value="date-asc">Älteste (Datum) zuerst</option>
+                        <option value="date-desc">Neueste (Datum) zuerst</option>
                     </select>
                 </div>
                 <div class="divide-y divide-gray-100 dark:divide-zinc-800" id="dashboard-deadline-list"></div>
@@ -78,42 +81,44 @@
 
         <div id="dynamic-category-view" class="tab-content hidden">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
                 <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-6 h-fit shadow-sm">
                     <h2 class="text-lg font-semibold mb-4" id="category-view-title">Eintrag hinzufügen</h2>
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-xs font-medium text-gray-500 dark:text-zinc-400 mb-1.5">Name (Was soll getracked werden?)</label>
+                            <label class="block text-xs font-medium text-gray-500 mb-1.5">Name (Was soll getracked werden?)</label>
                             <input type="text" id="generic-name" class="w-full bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-gray-500 dark:text-zinc-400 mb-1.5">Intervall / Termin</label>
+                            <label class="block text-xs font-medium text-gray-500 mb-1.5">Intervall / Termin</label>
                             <select id="generic-type" onchange="handleTypeChange(this)" class="w-full bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500"></select>
                         </div>
                         <div class="flex gap-4">
                             <div class="flex-1">
-                                <label class="block text-xs font-medium text-gray-500 dark:text-zinc-400 mb-1.5">Datum</label>
+                                <label class="block text-xs font-medium text-gray-500 mb-1.5">Datum</label>
                                 <input type="date" id="generic-datum" onclick="this.showPicker && this.showPicker()" class="w-full bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 cursor-pointer">
                             </div>
                             <div class="w-1/3">
-                                <label class="block text-xs font-medium text-gray-500 dark:text-zinc-400 mb-1.5">Uhrzeit</label>
+                                <label class="block text-xs font-medium text-gray-500 mb-1.5">Uhrzeit</label>
                                 <input type="time" id="generic-zeit" onclick="this.showPicker && this.showPicker()" class="w-full bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 cursor-pointer">
                             </div>
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-gray-500 dark:text-zinc-400 mb-1.5">Kosten in € (optional)</label>
+                            <label class="block text-xs font-medium text-gray-500 mb-1.5">Kosten in € (optional)</label>
                             <input type="number" id="generic-cost" step="0.01" placeholder="0.00" class="w-full bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
                         </div>
                         <button onclick="saveGenericEntry()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium py-2 rounded-lg transition-colors cursor-pointer">Speichern</button>
                     </div>
                 </div>
+                
                 <div class="lg:col-span-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm">
                     <div class="px-6 py-4 border-b border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-900/50 flex flex-col sm:flex-row justify-between gap-4">
                         <h2 class="font-semibold self-center sm:self-start">Historie</h2>
                         <div class="flex gap-2 w-full sm:w-auto">
-                            <input type="text" id="search-history" onkeyup="renderGenericHistoryList(currentCategory)" placeholder="Suchen (Name, Termin)..." class="flex-1 sm:w-48 bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-emerald-500">
+                            <input type="text" id="search-history" onkeyup="renderGenericHistoryList(currentCategory)" placeholder="Suchen..." class="flex-1 sm:w-48 bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-emerald-500">
                             <select id="sort-history" onchange="renderGenericHistoryList(currentCategory)" class="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-emerald-500">
-                                <option value="date-desc">Neueste zuerst</option>
                                 <option value="date-asc">Älteste zuerst</option>
+                                <option value="date-desc">Neueste zuerst</option>
                                 <option value="cost-desc">Höchste Kosten</option>
                             </select>
                         </div>
@@ -134,6 +139,7 @@
             <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-6 shadow-sm">
                 <h2 class="text-lg font-semibold mb-2">Struktur-Editor (Kategorien & Termine)</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
                     <div class="bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-lg p-4">
                         <h3 class="text-sm font-medium mb-3 text-gray-700 dark:text-zinc-300">Neue Hauptkategorie anlegen</h3>
                         <div class="space-y-3">
@@ -141,6 +147,7 @@
                             <button onclick="createNewCategoryFromSettings()" class="w-full bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 dark:hover:bg-zinc-700 text-xs py-2 rounded font-medium cursor-pointer transition-colors">Kategorie erstellen</button>
                         </div>
                     </div>
+                    
                     <div class="bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-lg p-4">
                         <h3 class="text-sm font-medium mb-3 text-gray-700 dark:text-zinc-300">Neuen Termin zuweisen</h3>
                         <div class="space-y-3">
@@ -151,23 +158,27 @@
                                     <option value="interval">Mit Intervall</option>
                                     <option value="log">Einmalig</option>
                                 </select>
-                                <div id="interval-days-container" class="flex-1"><input type="number" id="new-opt-interval" placeholder="Tage (z.B. 182)" class="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-md px-3 py-1.5 text-xs"></div>
+                                <div id="interval-days-container" class="flex-1">
+                                    <input type="number" id="new-opt-interval" placeholder="Tage (z.B. 182)" class="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-md px-3 py-1.5 text-xs">
+                                </div>
                             </div>
+                            <input type="number" id="new-opt-warn-days" placeholder="Warnung X Tage vorher (Standard: 14)" class="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-md px-3 py-1.5 text-xs">
                             <input type="number" id="new-opt-est-cost" step="0.01" placeholder="Geschätzte Kosten in € (optional)" class="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-md px-3 py-1.5 text-xs">
                             <button onclick="addOptionToCategory()" class="w-full bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 dark:hover:bg-zinc-700 text-xs py-2 rounded font-medium cursor-pointer transition-colors">Termin hinzufügen</button>
                         </div>
                     </div>
                 </div>
+                
                 <div class="mt-6 border-t border-gray-200 dark:border-zinc-800 pt-6">
-                    <h3 class="text-sm font-medium mb-3 text-rose-500">Kategorien löschen</h3>
-                    <div id="delete-management-list" class="flex flex-wrap gap-2"></div>
+                    <h3 class="text-sm font-medium mb-3 text-gray-700 dark:text-zinc-300">Kategorien verwalten</h3>
+                    <div id="delete-management-list" class="flex flex-col gap-2"></div>
                 </div>
             </div>
 
             <div class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-6 shadow-sm">
                 <h2 class="text-lg font-semibold mb-2">Export & Import</h2>
                 <div class="flex flex-col sm:flex-row gap-4">
-                    <button onclick="exportFullBackup()" class="flex-1 bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 dark:hover:bg-zinc-700 text-sm font-medium py-2.5 rounded-lg cursor-pointer transition-colors">Daten exportieren (JSON)</button>
+                    <button onclick="exportFullBackup()" class="flex-1 bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 dark:hover:bg-zinc-700 text-sm font-medium py-2.5 rounded-lg cursor-pointer transition-colors">Daten exportieren</button>
                     <label class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium py-2.5 rounded-lg cursor-pointer text-center relative block transition-colors">
                         <span>Daten importieren</span>
                         <input type="file" id="import-backup-file" onchange="importFullBackup()" class="hidden">
@@ -177,23 +188,51 @@
 
             <div class="bg-white dark:bg-zinc-900 border border-rose-900/50 rounded-xl p-6 shadow-sm">
                 <h2 class="text-lg font-semibold text-rose-500 mb-2">Gefahrenzone</h2>
-                <p class="text-sm text-gray-500 dark:text-zinc-400 mb-4">Hier kannst du den Tracker in seinen Ursprungszustand zurückversetzen. Alle Einträge und Strukturen verschwinden.</p>
+                <p class="text-sm text-gray-500 dark:text-zinc-400 mb-4">Hier kannst du den Tracker in seinen Ursprungszustand zurückversetzen. Alle Einträge verschwinden.</p>
                 <button onclick="nukeAllData()" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg font-bold transition-all cursor-pointer">ALLES LÖSCHEN & ZURÜCKSETZEN</button>
             </div>
         </div>
     </main>
 
+    <div id="globalCalendarModal" class="fixed inset-0 bg-black/80 hidden z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-zinc-900 rounded-xl w-full max-w-4xl max-h-[90vh] flex flex-col border border-zinc-800">
+            <div class="p-5 border-b border-zinc-800 flex justify-between items-center bg-zinc-950 rounded-t-xl">
+                <h2 class="text-lg font-bold text-zinc-100 flex items-center gap-4">
+                    <button onclick="changeCalendarMonth(-1)" class="text-gray-500 hover:text-emerald-500 px-2 py-1 bg-zinc-800 rounded">&#8592;</button>
+                    <span id="calendarMonthYearDisplay" class="w-40 text-center"></span>
+                    <button onclick="changeCalendarMonth(1)" class="text-gray-500 hover:text-emerald-500 px-2 py-1 bg-zinc-800 rounded">&#8594;</button>
+                </h2>
+                <button onclick="document.getElementById('globalCalendarModal').classList.add('hidden')" class="text-gray-400 hover:text-rose-500 text-2xl font-bold transition-colors">&times;</button>
+            </div>
+            <div class="p-4 overflow-y-auto flex-1 bg-zinc-950" id="globalCalendarModalContent">
+                </div>
+        </div>
+    </div>
+
     <script>
         // --- 1. DATENSTRUKTUR & HILFSFUNKTIONEN ---
-        const defaultCategories = {'katzen': { label: 'Katzen', types: { 'Zeckenmittel': 28, 'Wurmkur': 91, 'Impfung': 365 } }, 'auto': { label: 'Autos', types: { 'TÜV': 730, 'Bremsen': 0, 'Reifen': 0, 'Licht': 0 } }, 'zahnarzt': { label: 'Zahnarzt', types: { 'Prophylaxe': 182 } }};
+        const defaultCategories = {'katzen': { label: 'Katzen', types: { 'Zeckenmittel': { interval: 28, warnDays: 3 }, 'Wurmkur': { interval: 91, warnDays: 7 }, 'Impfung': { interval: 365, warnDays: 30 } } }, 'auto': { label: 'Autos', types: { 'TÜV': { interval: 730, warnDays: 30 }, 'Bremsen': 0, 'Reifen': 0, 'Licht': 0 } }, 'zahnarzt': { label: 'Zahnarzt', types: { 'Prophylaxe': { interval: 182, warnDays: 14 } } }};
+        
         let currentCategory = 'dashboard';
         let chartInstance = null;
+        let calCurrentMonth = new Date().getMonth();
+        let calCurrentYear = new Date().getFullYear();
         
         function getInterval(typeData) { return typeof typeData === 'object' ? typeData.interval : typeData; }
         function getEstCost(typeData) { return typeof typeData === 'object' ? typeData.estCost : null; }
+        function getWarnDays(typeData) { return typeof typeData === 'object' && typeData.warnDays !== undefined ? typeData.warnDays : 14; }
         function formatInterval(days) { return days === 0 ? 'Einmalig' : (days >= 365 ? `${Math.round(days/365)} Jahr(e)` : (days >= 30 ? `${Math.round(days/30.5)} Monat(e)` : `${days} Tage`)); }
         
-        // Modifiziert für benutzerdefinierte Reihenfolge
+        // BUGFIX 1: Sichere Datums-Konvertierung ohne Zeitzonen-Versatz
+        function formatDisplayDate(dateString) {
+            if (!dateString) return "";
+            const parts = dateString.split('-');
+            if (parts.length !== 3) return dateString;
+            const d = new Date(parts[0], parts[1] - 1, parts[2]); 
+            const days = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+            return `${days[d.getDay()]}, ${d.toLocaleDateString('de-DE')}`;
+        }
+
         function getCategoriesConfig() { 
             const order = JSON.parse(localStorage.getItem('category_order')) || [];
             let data = JSON.parse(localStorage.getItem('tracker_categories'));
@@ -232,7 +271,7 @@
             }
         }
 
-        // --- 3. NAVIGATION & UI ---
+        // --- 3. NAVIGATION ---
         function renderNavigation() {
             const navContainer = document.getElementById('navigation-tabs');
             const config = getCategoriesConfig();
@@ -276,7 +315,7 @@
             }
         }
 
-        // --- 4. KATEGORIE-ANSICHT (CRUD) ---
+        // --- 4. KATEGORIE-ANSICHT ---
         function renderGenericCategoryPage(catId) {
             const config = getCategoriesConfig()[catId];
             document.getElementById('category-view-title').innerText = `${config.label} bearbeiten`;
@@ -304,14 +343,16 @@
             if (!termName || !termName.trim()) return;
             const daysStr = prompt("Intervall in Tagen (0 für einmalig):", "0");
             if (daysStr === null) return;
+            const warnStr = prompt("Warnung X Tage vor Fälligkeit (Standard: 14):", "14");
             const estCostStr = prompt("Geschätzte Kosten in € (optional):", "");
             
             const days = parseInt(daysStr) || 0;
+            const warnDays = (warnStr !== null && warnStr.trim() !== "") ? parseInt(warnStr) : 14;
             const estCost = parseFloat(estCostStr) || null;
             const config = getCategoriesConfig();
             
             if (!config[currentCategory].types) config[currentCategory].types = {};
-            config[currentCategory].types[termName.trim()] = { interval: days, estCost: estCost };
+            config[currentCategory].types[termName.trim()] = { interval: days, warnDays: warnDays >= 0 ? warnDays : 14, estCost: estCost };
             localStorage.setItem('tracker_categories', JSON.stringify(config));
             renderGenericCategoryPage(currentCategory);
             document.getElementById('generic-type').value = termName.trim();
@@ -341,9 +382,11 @@
             
             if(!name || !type || type === '__NEW__' || !date) return alert("Pflichtfelder ausfüllen!");
             const entries = getEntries(currentCategory);
+            
             entries.push({ id: Date.now().toString(36), name, type, date, zeit: zeit || null, cost: cost || null, done: false });
             entries.sort((a,b) => new Date(b.date) - new Date(a.date));
             localStorage.setItem(`entries_${currentCategory}`, JSON.stringify(entries));
+            
             document.getElementById('generic-name').value = "";
             document.getElementById('generic-zeit').value = "";
             document.getElementById('generic-cost').value = "";
@@ -354,6 +397,17 @@
             const entries = getEntries(catId);
             const entry = entries.find(e => e.id === entryId);
             if (!entry) return;
+            
+            const config = getCategoriesConfig();
+            let currentWarnDays = entry.warnDays;
+            if (currentWarnDays === undefined) {
+                if (config[catId] && config[catId].types && config[catId].types[entry.type]) {
+                    currentWarnDays = config[catId].types[entry.type].warnDays !== undefined ? config[catId].types[entry.type].warnDays : 14;
+                } else {
+                    currentWarnDays = 14;
+                }
+            }
+
             const newName = prompt("Neue Bezeichnung (Eintrag):", entry.name);
             if (newName === null) return;
             const newType = prompt("Termin-Name (z.B. TÜV):", entry.type);
@@ -364,15 +418,27 @@
             if (newZeit === null) return;
             const newCost = prompt("Neue Kosten (in €):", entry.cost || "");
             if (newCost === null) return;
-            
+            const newWarnDays = prompt("Warnung X Tage vorher (nur für diesen Termin):", currentWarnDays);
+            if (newWarnDays === null) return;
+
             entry.name = newName.trim();
             entry.type = newType.trim();
             entry.date = newDate;
             entry.zeit = newZeit.trim() === "" ? null : newZeit.trim();
             entry.cost = newCost.trim() === "" ? null : newCost.trim();
+            entry.warnDays = parseInt(newWarnDays) || 14; 
+
             entries.sort((a,b) => new Date(b.date) - new Date(a.date));
             localStorage.setItem(`entries_${catId}`, JSON.stringify(entries));
-            renderGenericHistoryList(catId);
+            
+            if(currentCategory === 'dashboard') {
+                renderDashboard();
+            } else {
+                renderGenericHistoryList(catId);
+            }
+            if(!document.getElementById('globalCalendarModal').classList.contains('hidden')) {
+                renderGlobalCalendar(); 
+            }
         }
 
         function deleteEntry(catId, entryId) {
@@ -389,25 +455,51 @@
             if(entry) {
                 entry.done = !entry.done;
                 localStorage.setItem(`entries_${catId}`, JSON.stringify(entries));
-                renderGenericHistoryList(catId);
+                
+                if (currentCategory === 'dashboard') {
+                    renderDashboard();
+                } else {
+                    renderGenericHistoryList(catId);
+                }
+                
+                if(!document.getElementById('globalCalendarModal').classList.contains('hidden')) {
+                    renderGlobalCalendar();
+                }
             }
         }
 
-        function getStatusInfo(targetDateStr, intervalDays) {
-            let nextDate = (intervalDays === 0 || intervalDays === undefined) ? new Date(targetDateStr) : new Date(new Date(targetDateStr).getTime() + (intervalDays * 86400000));
-            const diffDays = Math.ceil((nextDate.setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / 86400000);
+        // BUGFIX 2: Exakte Status- und Sommerzeit-Berechnung über setDate()
+        function getStatusInfo(targetDateStr, intervalDays, warnDays = 14) {
+            const parts = targetDateStr.split('-');
+            let nextDate = new Date(parts[0], parts[1] - 1, parts[2]); 
             
-            if (intervalDays === 0) {
-                if (diffDays < 0) return { diffDays, text: `Abgeschlossen`, status: 'gray', class: "text-gray-600 bg-gray-100 dark:text-gray-400 dark:bg-gray-500/10 border border-gray-200 dark:border-gray-500/20" };
-                if (diffDays === 0) return { diffDays, text: `Heute!`, status: 'yellow', class: "text-amber-600 bg-amber-100 dark:text-amber-400 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20" };
-                if (diffDays <= 14) return { diffDays, text: `Geplant am ${nextDate.toLocaleDateString('de-DE')} (In ${diffDays} T.)`, status: 'yellow', class: "text-amber-600 bg-amber-100 dark:text-amber-400 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20" };
-                return { diffDays, text: `Geplant für ${nextDate.toLocaleDateString('de-DE')}`, status: 'green', class: "text-emerald-600 bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20" };
+            if (intervalDays > 0) {
+                nextDate.setDate(nextDate.getDate() + intervalDays);
             }
 
-            if (diffDays < 0) return { diffDays, text: `Fällig seit ${nextDate.toLocaleDateString('de-DE')}`, status: 'red', class: "text-rose-600 bg-rose-100 dark:text-rose-400 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20" };
-            if (diffDays === 0) return { diffDays, text: `Heute fällig!`, status: 'red', class: "text-rose-600 bg-rose-100 dark:text-rose-400 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20" };
-            if (diffDays <= 14) return { diffDays, text: `Fällig am ${nextDate.toLocaleDateString('de-DE')} (In ${diffDays} T.)`, status: 'yellow', class: "text-amber-600 bg-amber-100 dark:text-amber-400 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20" };
-            return { diffDays, text: `Geplant für ${nextDate.toLocaleDateString('de-DE')}`, status: 'green', class: "text-emerald-600 bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20" };
+            const y = nextDate.getFullYear();
+            const m = String(nextDate.getMonth() + 1).padStart(2, '0');
+            const d = String(nextDate.getDate()).padStart(2, '0');
+            const displayDate = formatDisplayDate(`${y}-${m}-${d}`);
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            nextDate.setHours(0, 0, 0, 0);
+            const diffDays = Math.round((nextDate.getTime() - today.getTime()) / 86400000);
+
+            if (intervalDays === 0 || intervalDays === undefined) {
+                if (diffDays < 0) return { diffDays, text: `Abgeschlossen`, status: 'gray', class: "text-gray-600 bg-gray-100 dark:text-gray-400 dark:bg-gray-500/10 border border-gray-200 dark:border-gray-500/20" };
+                if (diffDays === 0) return { diffDays, text: `Heute!`, status: 'red', class: "text-rose-600 bg-rose-100 dark:text-rose-400 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 font-bold" };
+                if (diffDays === 1) return { diffDays, text: `Morgen!`, status: 'yellow', class: "text-orange-600 bg-orange-100 dark:text-orange-400 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 font-bold" };
+                if (diffDays <= warnDays) return { diffDays, text: `Geplant am ${displayDate} (In ${diffDays} T.)`, status: 'yellow', class: "text-amber-600 bg-amber-100 dark:text-amber-400 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20" };
+                return { diffDays, text: `Geplant für ${displayDate}`, status: 'green', class: "text-emerald-600 bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20" };
+            }
+
+            if (diffDays < 0) return { diffDays, text: `Fällig seit ${displayDate}`, status: 'red', class: "text-rose-600 bg-rose-100 dark:text-rose-400 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20" };
+            if (diffDays === 0) return { diffDays, text: `Heute fällig!`, status: 'red', class: "text-rose-600 bg-rose-100 dark:text-rose-400 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 font-bold" };
+            if (diffDays === 1) return { diffDays, text: `Morgen fällig!`, status: 'yellow', class: "text-orange-600 bg-orange-100 dark:text-orange-400 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 font-bold" };
+            if (diffDays <= warnDays) return { diffDays, text: `Fällig am ${displayDate} (In ${diffDays} T.)`, status: 'yellow', class: "text-amber-600 bg-amber-100 dark:text-amber-400 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20" };
+            return { diffDays, text: `Geplant für ${displayDate}`, status: 'green', class: "text-emerald-600 bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20" };
         }
 
         // --- 5. HISTORIE & AUSWERTUNG ---
@@ -417,7 +509,7 @@
             const config = getCategoriesConfig()[catId];
             
             const searchText = (document.getElementById('search-history')?.value || '').toLowerCase();
-            const sortMode = document.getElementById('sort-history')?.value || 'date-desc';
+            const sortMode = document.getElementById('sort-history')?.value || 'date-asc'; 
             
             if (searchText) {
                 entries = entries.filter(e => e.name.toLowerCase().includes(searchText) || e.type.toLowerCase().includes(searchText));
@@ -443,16 +535,21 @@
                 const interval = config.types ? getInterval(config.types[e.type]) : undefined;
                 const isDone = e.done === true;
                 
+                let warnDays = e.warnDays;
+                if (warnDays === undefined) warnDays = config.types ? getWarnDays(config.types[e.type]) : 14;
+                
                 let status;
                 if (isDone) {
                     status = { text: "Erledigt", class: "text-gray-500 dark:text-zinc-500 bg-gray-200 dark:bg-zinc-800 border border-gray-300 dark:border-zinc-700" };
                 } else if (interval === 0) {
-                    status = getStatusInfo(e.date, interval);
+                    status = getStatusInfo(e.date, interval, warnDays); 
                 } else {
-                    status = isLatest ? getStatusInfo(e.date, interval) : { text: "Historie", class: "text-gray-500 dark:text-zinc-500 bg-gray-100 dark:bg-zinc-950/40 border border-gray-200 dark:border-zinc-800" };
+                    status = isLatest ? getStatusInfo(e.date, interval, warnDays) : { text: "Historie", class: "text-gray-500 dark:text-zinc-500 bg-gray-100 dark:bg-zinc-950/40 border border-gray-200 dark:border-zinc-800" };
                 }
                 
-                const costDisplay = e.cost ? `<span class="text-xs text-amber-600 dark:text-amber-500 font-medium ml-3">| ${e.cost} €</span>` : '';
+                const costVal = parseFloat(e.cost) || 0;
+                const costDisplay = costVal > 0 ? `<span class="text-xs text-amber-600 dark:text-amber-500 font-medium ml-3">| ${costVal.toFixed(2)} €</span>` : '';
+                
                 const zeitDisplay = e.zeit ? ` um ${e.zeit} Uhr` : '';
                 const textStyle = isDone ? "line-through opacity-50" : "";
                 
@@ -461,7 +558,7 @@
                         <div class="${textStyle} transition-all">
                             <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-500 block uppercase">${e.name}</span>
                             <span class="text-sm font-medium text-gray-800 dark:text-zinc-200">${e.type} ${costDisplay}</span>
-                            <span class="text-xs text-gray-500 dark:text-zinc-500 ml-2">am ${new Date(e.date).toLocaleDateString('de-DE')}${zeitDisplay}</span>
+                            <span class="text-xs text-gray-500 dark:text-zinc-500 ml-2">am ${formatDisplayDate(e.date)}${zeitDisplay}</span>
                         </div>
                         <div class="flex items-center gap-2">
                             <div class="text-xs px-2.5 py-1 rounded-md font-medium ${status.class} mr-2">${status.text}</div>
@@ -472,41 +569,44 @@
                     </div>`;
             }).join('');
 
-            const years = [...new Set(entries.map(e => new Date(e.date).getFullYear()))].sort();
-            html += `
-                <div class="px-6 py-6 border-t border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950/50">
-                    <div class="mb-6">
-                        <h3 class="text-xs font-bold text-gray-500 dark:text-zinc-400 uppercase tracking-wider mb-3">Kostenanalyse (Zahlen)</h3>
-                        <div class="space-y-1 text-sm">`;
-
-            years.forEach(year => {
-                const yearCost = entries
-                    .filter(e => new Date(e.date).getFullYear() === year)
-                    .reduce((sum, e) => sum + (parseFloat(e.cost) || 0), 0);
-                html += `
-                            <div class="flex justify-between max-w-xs">
-                                <span class="text-gray-500 dark:text-zinc-500">${year}:</span>
-                                <span class="font-bold text-gray-900 dark:text-zinc-200">${yearCost.toFixed(2)} €</span>
-                            </div>`;
-            });
-
             const totalCost = entries.reduce((sum, e) => sum + (parseFloat(e.cost) || 0), 0);
-            html += `
-                            <div class="flex justify-between max-w-xs pt-2 mt-1 border-t border-gray-200 dark:border-zinc-800">
-                                <span class="text-gray-700 dark:text-zinc-300 font-semibold">Gesamt:</span>
-                                <span class="font-bold text-emerald-600 dark:text-emerald-500">${totalCost.toFixed(2)} €</span>
+            
+            if (totalCost > 0) {
+                const years = [...new Set(entries.map(e => new Date(e.date).getFullYear()))].sort();
+                html += `
+                    <div class="px-6 py-6 border-t border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950/50">
+                        <div class="mb-6">
+                            <h3 class="text-xs font-bold text-gray-500 dark:text-zinc-400 uppercase tracking-wider mb-3">Kostenanalyse (Zahlen)</h3>
+                            <div class="space-y-1 text-sm">`;
+
+                years.forEach(year => {
+                    const yearCost = entries
+                        .filter(e => new Date(e.date).getFullYear() === year)
+                        .reduce((sum, e) => sum + (parseFloat(e.cost) || 0), 0);
+                    
+                    if (yearCost > 0) {
+                        html += `
+                                <div class="flex justify-between max-w-xs">
+                                    <span class="text-gray-500 dark:text-zinc-500">${year}:</span>
+                                    <span class="font-bold text-gray-900 dark:text-zinc-200">${yearCost.toFixed(2)} €</span>
+                                </div>`;
+                    }
+                });
+
+                html += `
+                                <div class="flex justify-between max-w-xs pt-2 mt-1 border-t border-gray-200 dark:border-zinc-800">
+                                    <span class="text-gray-700 dark:text-zinc-300 font-semibold">Gesamt:</span>
+                                    <span class="font-bold text-emerald-600 dark:text-emerald-500">${totalCost.toFixed(2)} €</span>
+                                </div>
                             </div>
                         </div>
-                    </div>`;
-
-            if (totalCost > 0) {
-                html += `
-                    <div>
-                        <h3 class="text-xs font-bold text-gray-500 dark:text-zinc-400 uppercase tracking-wider mb-2">Grafischer Verlauf</h3>
-                        <div class="w-full max-w-2xl mx-auto"><canvas id="costChart"></canvas></div>
+                        <div>
+                            <h3 class="text-xs font-bold text-gray-500 dark:text-zinc-400 uppercase tracking-wider mb-2">Grafischer Verlauf</h3>
+                            <div class="w-full max-w-2xl mx-auto"><canvas id="costChart"></canvas></div>
+                        </div>
                     </div>`;
             }
-            html += `</div>`;
+
             container.innerHTML = html;
             
             if (totalCost > 0) { renderChart(entries); } 
@@ -554,7 +654,7 @@
             });
         }
 
-        // --- 6. DASHBOARD & EINSTELLUNGEN ---
+        // --- 6. DASHBOARD ---
         function renderDashboard() {
             const container = document.getElementById('dashboard-deadline-list');
             const sortMode = document.getElementById('sort-dashboard') ? document.getElementById('sort-dashboard').value : 'urgent';
@@ -568,7 +668,7 @@
                 const oneOffs = [];
                 
                 entries.forEach(e => { 
-                    if(e.done) return; // Hier werden fertige Tasks ausgeblendet
+                    if(e.done) return; 
 
                     const types = config[catId].types || {};
                     const interval = types[e.type] !== undefined ? getInterval(types[e.type]) : undefined;
@@ -588,14 +688,23 @@
             let renderList = [];
             allDeadlines.forEach(item => {
                 const e = item.entry;
-                const status = getStatusInfo(e.date, item.interval);
+                const config = getCategoriesConfig();
+                
+                let warnDays = e.warnDays;
+                if (warnDays === undefined) {
+                    warnDays = config[item.catId].types[e.type] !== undefined ? getWarnDays(config[item.catId].types[e.type]) : 14;
+                }
+                
+                const status = getStatusInfo(e.date, item.interval, warnDays); 
                 if (item.interval === 0 && status.status === 'gray') return;
 
                 if(status.status === 'red') cRed++; 
                 if(status.status === 'yellow') cYellow++; 
                 if(status.status === 'green') cGreen++;
                 
-                renderList.push({ ...item, status, targetDate: new Date(e.date) });
+                // Bugfix für Datum-Sortierung (Zeitzonen-sicher)
+                const parts = e.date.split('-');
+                renderList.push({ ...item, status, targetDate: new Date(parts[0], parts[1] - 1, parts[2]) });
             });
             
             renderList.sort((a, b) => {
@@ -608,7 +717,6 @@
             renderList.forEach(item => {
                 const e = item.entry;
                 const config = getCategoriesConfig();
-                // NEU: Uhrzeit in der Fristenmatrix
                 const zeitDisplay = e.zeit ? ` | ${e.zeit} Uhr` : '';
                 
                 matrixHtml += `
@@ -620,7 +728,11 @@
                                 <span class="text-xs text-gray-500 dark:text-zinc-400 block">${e.type} (Intervall: ${formatInterval(item.interval)})${zeitDisplay}</span>
                             </div>
                         </div>
-                        <div class="text-xs px-3 py-1 rounded-lg font-medium ${item.status.class}">${item.status.text}</div>
+                        <div class="flex items-center gap-2">
+                            <div class="text-xs px-3 py-1 rounded-lg font-medium ${item.status.class}">${item.status.text}</div>
+                            <button onclick="toggleDone('${item.catId}', '${e.id}')" class="cursor-pointer text-lg p-2 transition-transform hover:scale-110" title="Erledigt markieren">⬜</button>
+                            <button onclick="editEntry('${item.catId}', '${e.id}')" class="text-gray-400 hover:text-blue-500 dark:text-zinc-500 dark:hover:text-blue-400 transition-colors p-2 text-lg" title="Bearbeiten">✏️</button>
+                        </div>
                     </div>`;
             });
             
@@ -630,9 +742,77 @@
             container.innerHTML = matrixHtml || `<div class="p-6 text-sm text-gray-500 text-center">Keine Überwachungsfristen vorhanden.</div>`;
         }
 
+        // --- 7. ZENTRALER KALENDER (Zeigt auch erledigte an) ---
+        function openGlobalCalendar() {
+            const today = new Date();
+            calCurrentMonth = today.getMonth();
+            calCurrentYear = today.getFullYear();
+            document.getElementById('globalCalendarModal').classList.remove('hidden');
+            renderGlobalCalendar();
+        }
+
+        function changeCalendarMonth(offset) {
+            calCurrentMonth += offset;
+            if (calCurrentMonth > 11) { calCurrentMonth = 0; calCurrentYear++; }
+            else if (calCurrentMonth < 0) { calCurrentMonth = 11; calCurrentYear--; }
+            renderGlobalCalendar();
+        }
+
+        function renderGlobalCalendar() {
+            try {
+                const monthNames = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+                document.getElementById('calendarMonthYearDisplay').innerText = `${monthNames[calCurrentMonth]} ${calCurrentYear}`;
+                
+                // Lade ALLE Termine (inklusive erledigter!)
+                let allEntries = [];
+                const config = getCategoriesConfig();
+                Object.keys(config).forEach(catId => {
+                    const entries = getEntries(catId);
+                    if (Array.isArray(entries)) {
+                        entries.forEach(e => {
+                            allEntries.push({...e, categoryName: config[catId].label, catId: catId});
+                        });
+                    }
+                });
+
+                let html = ["Mo","Di","Mi","Do","Fr","Sa","So"].map(d => `<div class="font-bold p-2 text-zinc-500 text-xs text-center">${d}</div>`).join('');
+                
+                const firstDay = new Date(calCurrentYear, calCurrentMonth, 1).getDay();
+                const startOffset = (firstDay === 0) ? 6 : firstDay - 1;
+                
+                for(let i=0; i<startOffset; i++) html += `<div></div>`;
+                
+                const daysInMonth = new Date(calCurrentYear, calCurrentMonth + 1, 0).getDate();
+                
+                for(let i=1; i<=daysInMonth; i++) {
+                    const dateStr = `${calCurrentYear}-${String(calCurrentMonth+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+                    const dayEntries = allEntries.filter(e => e.date === dateStr);
+                    
+                    html += `
+                        <div class="border border-zinc-800 min-h-[80px] p-1 text-left bg-zinc-950 flex flex-col">
+                            <div class="text-[10px] text-zinc-600 font-bold mb-1">${i}</div>
+                            <div class="flex-1 flex flex-col gap-0.5 overflow-y-auto no-scrollbar">
+                                ${dayEntries.map(e => `
+                                    <div onclick="editEntry('${e.catId}', '${e.id}')" 
+                                         class="text-[9px] px-1 py-0.5 rounded truncate cursor-pointer ${e.done ? 'bg-zinc-800 text-zinc-500 line-through' : 'bg-emerald-900/40 text-emerald-300'}"
+                                         title="${e.name}">
+                                         ${e.name}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>`;
+                }
+                document.getElementById('globalCalendarModalContent').innerHTML = `<div class="grid grid-cols-7 gap-1">${html}</div>`;
+                
+            } catch (err) {
+                console.error("Kalender Fehler:", err);
+                document.getElementById('globalCalendarModalContent').innerHTML = "<p class='p-4 text-rose-500'>Kalender konnte nicht geladen werden.</p>";
+            }
+        }
+
+        // --- 8. EINSTELLUNGEN & DATEN-MANAGEMENT ---
         function toggleIntervalInput() { document.getElementById('interval-days-container').classList.toggle('hidden', document.getElementById('new-opt-mode').value === 'log'); }
 
-        // Alles Löschen Logik
         function nukeAllData() {
             if(prompt("ACHTUNG: Dies löscht ALLE Daten unwiderruflich. Tippe 'LÖSCHEN' zur Bestätigung:") === 'LÖSCHEN') {
                 localStorage.clear();
@@ -640,7 +820,6 @@
             }
         }
 
-        // Pfeil-Sortierung für Kategorien
         function moveCategory(id, direction) {
             let order = Object.keys(getCategoriesConfig());
             const idx = order.indexOf(id);
@@ -654,9 +833,22 @@
             renderSettingsPanel(); 
             renderNavigation();
         }
+        
+        function renameCategory(catId) {
+            const config = getCategoriesConfig();
+            const newLabel = prompt("Neuer Name für diese Kategorie:", config[catId].label);
+            if (newLabel && newLabel.trim()) {
+                config[catId].label = newLabel.trim();
+                localStorage.setItem('tracker_categories', JSON.stringify(config));
+                renderNavigation();
+                renderSettingsPanel();
+                if (currentCategory === catId) renderGenericCategoryPage(catId);
+            }
+        }
 
         function renderSettingsPanel() {
             const config = getCategoriesConfig();
+            
             const sortList = document.getElementById('sort-category-list');
             if(sortList) {
                 sortList.innerHTML = Object.keys(config).map(id => `
@@ -671,7 +863,13 @@
             }
 
             document.getElementById('add-opt-cat-select').innerHTML = Object.keys(config).map(k => `<option value="${k}">${config[k].label}</option>`).join('');
-            document.getElementById('delete-management-list').innerHTML = Object.keys(config).map(k => `<button onclick="deleteCategory('${k}')" class="bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-xs px-3 py-1.5 rounded-lg cursor-pointer">${config[k].label} löschen</button>`).join('');
+            
+            document.getElementById('delete-management-list').innerHTML = Object.keys(config).map(k => `
+                <div class="flex gap-2">
+                    <button onclick="renameCategory('${k}')" class="flex-1 bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 text-gray-700 dark:text-zinc-300 text-xs px-3 py-1.5 rounded-lg cursor-pointer">✏️ ${config[k].label} umbenennen</button>
+                    <button onclick="deleteCategory('${k}')" class="flex-1 bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-xs px-3 py-1.5 rounded-lg cursor-pointer">🗑️ ${config[k].label} löschen</button>
+                </div>
+            `).join('');
         }
 
         function saveNewCategoryLogic(label) {
@@ -694,16 +892,21 @@
             const catId = document.getElementById('add-opt-cat-select').value;
             const optName = document.getElementById('new-opt-name').value.trim();
             const interval = document.getElementById('new-opt-mode').value === 'interval' ? parseInt(document.getElementById('new-opt-interval').value) : 0;
+            
+            const warnDaysRaw = document.getElementById('new-opt-warn-days').value;
+            const warnDays = warnDaysRaw ? parseInt(warnDaysRaw) : 14;
             const estCost = parseFloat(document.getElementById('new-opt-est-cost').value) || null;
             
             if(!optName) return alert("Name fehlt.");
             const config = getCategoriesConfig();
             if(!config[catId].types) config[catId].types = {};
-            config[catId].types[optName] = { interval: interval, estCost: estCost };
+            
+            config[catId].types[optName] = { interval: interval, warnDays: warnDays, estCost: estCost };
             localStorage.setItem('tracker_categories', JSON.stringify(config));
             
             document.getElementById('new-opt-name').value = "";
             document.getElementById('new-opt-est-cost').value = "";
+            document.getElementById('new-opt-warn-days').value = "";
             alert("Termin hinzugefügt.");
         }
 
@@ -718,14 +921,27 @@
         function exportFullBackup() {
             const backup = { config: getCategoriesConfig(), data: {} };
             Object.keys(backup.config).forEach(k => { backup.data[k] = getEntries(k); });
-            const jsonString = JSON.stringify(backup, null, 2);
             
-            navigator.clipboard.writeText(jsonString).then(() => {
-                alert("Daten wurden in die Zwischenablage kopiert! Einfach in eine Notiz-App einfügen.");
-            }).catch(() => {
-                const win = window.open("", "Export", "width=400,height=400");
-                win.document.write("<pre>" + jsonString + "</pre>");
-            });
+            const jsonString = JSON.stringify(backup, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            
+            const now = new Date();
+            const timestamp = now.toISOString().split('T')[0] + "_" + now.getHours() + "-" + now.getMinutes();
+            
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none'; 
+            a.href = url;
+            a.download = `Tracker_Export_${timestamp}.json`;
+            document.body.appendChild(a);
+            a.click();
+            
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
+            
+            alert("Download für Android gestartet. Siehe 'Downloads'-Ordner.");
         }
 
         function importFullBackup() {
@@ -742,6 +958,18 @@
                 } catch (err) { alert("Format ungültig."); }
             };
             reader.readAsText(file);
+        }
+
+        function forceAppUpdate() {
+            if ('caches' in window) {
+                caches.keys().then(names => {
+                    for (let name of names) caches.delete(name);
+                }).then(() => {
+                    window.location.reload(true);
+                });
+            } else {
+                window.location.reload(true);
+            }
         }
 
         // Init
